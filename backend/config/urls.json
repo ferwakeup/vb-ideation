@@ -1,0 +1,9 @@
+{
+  "urls": [
+    "https://example.com/business-idea"
+  ],
+  "metadata": {
+    "last_updated": "2026-01-14",
+    "description": "URLs containing the business idea to evaluate. Replace with actual URLs before scoring."
+  }
+}
