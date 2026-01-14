@@ -1,7 +1,3 @@
-/**
- * TypeScript type definitions for the VB Idea Scorer
- */
-
 export interface DimensionScore {
   dimension: string;
   score: number;

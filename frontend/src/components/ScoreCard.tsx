@@ -1,7 +1,7 @@
 /**
  * Component to display a single dimension score
  */
-import { DimensionScore } from '../types';
+import type { DimensionScore } from '../types/index';
 
 interface Props {
   score: DimensionScore;

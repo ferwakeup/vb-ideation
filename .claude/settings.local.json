@@ -5,7 +5,9 @@
       "Bash(npm install)",
       "Bash(npm install:*)",
       "Bash(npx tailwindcss:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)"
     ]
   }
 }

@@ -3,6 +3,8 @@ Service for fetching and extracting content from URLs.
 """
 import httpx
 from bs4 import BeautifulSoup
+from pypdf import PdfReader
+from io import BytesIO
 from typing import Optional
 import logging
 
@@ -19,6 +21,7 @@ class URLFetcher:
     async def fetch_content(self, url: str) -> Optional[str]:
         """
         Fetch and extract text content from a URL.
+        Supports both HTML pages and PDF documents.
 
         Args:
             url: The URL to fetch content from
@@ -42,20 +45,28 @@ class URLFetcher:
                 )
                 response.raise_for_status()
 
-                # Parse HTML
-                soup = BeautifulSoup(response.text, 'html.parser')
+                # Check if content is PDF
+                content_type = response.headers.get('content-type', '').lower()
+                is_pdf = 'application/pdf' in content_type or url.lower().endswith('.pdf')
 
-                # Remove script, style, and other non-content elements
-                for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'iframe']):
-                    element.decompose()
+                if is_pdf:
+                    # Extract text from PDF
+                    text = self._extract_pdf_text(response.content)
+                else:
+                    # Parse HTML
+                    soup = BeautifulSoup(response.text, 'html.parser')
 
-                # Get text content
-                text = soup.get_text()
+                    # Remove script, style, and other non-content elements
+                    for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'iframe']):
+                        element.decompose()
 
-                # Clean up whitespace
-                lines = (line.strip() for line in text.splitlines())
-                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-                text = ' '.join(chunk for chunk in chunks if chunk)
+                    # Get text content
+                    text = soup.get_text()
+
+                    # Clean up whitespace
+                    lines = (line.strip() for line in text.splitlines())
+                    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                    text = ' '.join(chunk for chunk in chunks if chunk)
 
                 # Limit length
                 if len(text) > self.max_content_length:
@@ -74,6 +85,39 @@ class URLFetcher:
         except Exception as e:
             logger.error(f"Unexpected error fetching {url}: {e}")
             raise Exception(f"Error processing {url}: {str(e)}")
+
+    def _extract_pdf_text(self, pdf_content: bytes) -> str:
+        """
+        Extract text from PDF content.
+
+        Args:
+            pdf_content: Raw PDF bytes
+
+        Returns:
+            Extracted text from PDF
+        """
+        try:
+            pdf_file = BytesIO(pdf_content)
+            reader = PdfReader(pdf_file)
+
+            text_parts = []
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    text_parts.append(text)
+
+            full_text = '\n'.join(text_parts)
+
+            # Clean up whitespace
+            lines = (line.strip() for line in full_text.splitlines())
+            cleaned = ' '.join(line for line in lines if line)
+
+            logger.info(f"Extracted {len(cleaned)} characters from PDF ({len(reader.pages)} pages)")
+            return cleaned
+
+        except Exception as e:
+            logger.error(f"Error extracting PDF text: {e}")
+            raise Exception(f"Failed to extract text from PDF: {str(e)}")
 
     async def fetch_multiple(self, urls: list[str]) -> dict[str, str]:
         """

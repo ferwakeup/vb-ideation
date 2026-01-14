@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Tooltip
 } from 'recharts';
-import { DimensionScore } from '../types';
+import type { DimensionScore } from '../types/index';
 
 interface Props {
   scores: DimensionScore[];

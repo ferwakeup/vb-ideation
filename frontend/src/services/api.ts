@@ -2,7 +2,7 @@
  * API client for communicating with the backend
  */
 import axios from 'axios';
-import { IdeaScore, ScoringRequest, URLsResponse } from '../types';
+import type { IdeaScore, ScoringRequest, URLsResponse } from '../types/index';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
