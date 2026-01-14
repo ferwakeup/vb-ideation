@@ -1,6 +1,7 @@
+// New/Correct Config
 export default {
   plugins: {
-    tailwindcss: {},
+    "@tailwindcss/postcss": {}, // Update this line
     autoprefixer: {},
   },
 }
