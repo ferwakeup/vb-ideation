@@ -174,11 +174,37 @@ export default function IdeaScorer() {
                 </div>
               </div>
               <div
-                className={`text-lg font-semibold p-4 rounded-md border-2 text-center ${getRecommendationStyle(
+                className={`text-lg font-semibold p-4 rounded-md border-2 text-center mb-4 ${getRecommendationStyle(
                   scoreMutation.data.recommendation
                 )}`}
               >
                 {scoreMutation.data.recommendation}
+              </div>
+
+              {/* Cost Summary */}
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Total Tokens Used</div>
+                    <div className="text-2xl font-bold text-blue-700">
+                      {scoreMutation.data.total_tokens.toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">API Calls Made</div>
+                    <div className="text-2xl font-bold text-blue-700">
+                      {scoreMutation.data.dimension_scores.length}
+                    </div>
+                    <div className="text-xs text-gray-500">(dimension scores)</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Total Cost</div>
+                    <div className="text-3xl font-bold text-green-700">
+                      ${scoreMutation.data.total_cost_usd.toFixed(4)}
+                    </div>
+                    <div className="text-xs text-gray-500">USD</div>
+                  </div>
+                </div>
               </div>
             </div>
 

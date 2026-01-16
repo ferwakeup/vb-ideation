@@ -36,10 +36,22 @@ export default function ScoreCard({ score }: Props) {
         {score.reasoning}
       </p>
 
-      <div className="flex items-center text-xs text-gray-500">
-        <span className="font-medium">Confidence:</span>
-        <span className="ml-1">{getConfidenceText(score.confidence)}</span>
-        <span className="ml-1">({(score.confidence * 100).toFixed(0)}%)</span>
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <div>
+          <span className="font-medium">Confidence:</span>
+          <span className="ml-1">{getConfidenceText(score.confidence)}</span>
+          <span className="ml-1">({(score.confidence * 100).toFixed(0)}%)</span>
+        </div>
+        {score.token_usage && (
+          <div className="text-right">
+            <div className="font-medium text-blue-600">
+              {score.token_usage.total_tokens.toLocaleString()} tokens
+            </div>
+            <div className="text-gray-600">
+              ${score.token_usage.cost_usd.toFixed(4)}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

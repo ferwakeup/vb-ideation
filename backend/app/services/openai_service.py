@@ -13,8 +13,14 @@ from app.utils.prompts import (
     SYSTEM_PROMPT_DIMENSION_SCORING,
     SYSTEM_PROMPT_INSIGHTS
 )
+from app.models.score import TokenUsage
 
 logger = logging.getLogger(__name__)
+
+# GPT-4o pricing (as of January 2025)
+# https://openai.com/api/pricing/
+GPT4O_INPUT_PRICE = 2.50 / 1_000_000  # $2.50 per 1M input tokens
+GPT4O_OUTPUT_PRICE = 10.00 / 1_000_000  # $10.00 per 1M output tokens
 
 
 class OpenAIService:
@@ -30,6 +36,43 @@ class OpenAIService:
         self.client = AsyncOpenAI(api_key=api_key)
         self.model = "gpt-4o"
         self.temperature = 0.3  # Lower temperature for more consistent results
+
+    def _calculate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:
+        """
+        Calculate cost based on token usage.
+
+        Args:
+            prompt_tokens: Number of input tokens
+            completion_tokens: Number of output tokens
+
+        Returns:
+            Cost in USD
+        """
+        input_cost = prompt_tokens * GPT4O_INPUT_PRICE
+        output_cost = completion_tokens * GPT4O_OUTPUT_PRICE
+        return round(input_cost + output_cost, 6)
+
+    def _create_token_usage(self, usage) -> TokenUsage:
+        """
+        Create TokenUsage object from OpenAI API response.
+
+        Args:
+            usage: Usage object from OpenAI response
+
+        Returns:
+            TokenUsage object
+        """
+        prompt_tokens = usage.prompt_tokens
+        completion_tokens = usage.completion_tokens
+        total_tokens = usage.total_tokens
+        cost = self._calculate_cost(prompt_tokens, completion_tokens)
+
+        return TokenUsage(
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            cost_usd=cost
+        )
 
     async def extract_idea_summary(self, content: str) -> str:
         """
@@ -78,7 +121,7 @@ class OpenAIService:
             dimension_key: The dimension key to score
 
         Returns:
-            Dictionary with keys: score, reasoning, confidence
+            Dictionary with keys: score, reasoning, confidence, token_usage
 
         Raises:
             Exception: If OpenAI API call fails
@@ -114,12 +157,19 @@ class OpenAIService:
             if not 0 <= confidence <= 1:
                 confidence = max(0, min(1, confidence))  # Clamp to valid range
 
-            logger.info(f"Scored {dimension_key}: {score}/10 (confidence: {confidence})")
+            # Calculate token usage and cost
+            token_usage = self._create_token_usage(response.usage)
+
+            logger.info(
+                f"Scored {dimension_key}: {score}/10 (confidence: {confidence}) - "
+                f"Tokens: {token_usage.total_tokens}, Cost: ${token_usage.cost_usd:.4f}"
+            )
 
             return {
                 "score": score,
                 "reasoning": result["reasoning"],
-                "confidence": confidence
+                "confidence": confidence,
+                "token_usage": token_usage
             }
 
         except json.JSONDecodeError as e:

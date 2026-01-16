@@ -93,6 +93,14 @@ class IdeaScorer:
             ]
             insights = await self.openai_service.extract_insights(dimension_scores_for_insights)
 
+            # Calculate total tokens and cost
+            total_tokens = 0
+            total_cost = 0.0
+            for dim_score in dimension_scores:
+                if dim_score.token_usage:
+                    total_tokens += dim_score.token_usage.total_tokens
+                    total_cost += dim_score.token_usage.cost_usd
+
             # Build final result
             result = IdeaScore(
                 idea_summary=idea_summary,
@@ -102,10 +110,16 @@ class IdeaScorer:
                 recommendation=recommendation,
                 key_strengths=insights["strengths"],
                 key_concerns=insights["concerns"],
-                timestamp=datetime.utcnow().isoformat() + "Z"
+                timestamp=datetime.utcnow().isoformat() + "Z",
+                total_tokens=total_tokens,
+                total_cost_usd=round(total_cost, 4)
             )
 
-            logger.info(f"Scoring complete. Overall score: {overall_score}/10, Recommendation: {recommendation}")
+            logger.info(
+                f"Scoring complete. Overall score: {overall_score}/10, "
+                f"Recommendation: {recommendation}, "
+                f"Total tokens: {total_tokens}, Total cost: ${total_cost:.4f}"
+            )
             return result
 
         except Exception as e:
@@ -167,5 +181,6 @@ class IdeaScorer:
             dimension=SCORING_DIMENSIONS[dimension_key]["name"],
             score=result["score"],
             reasoning=result["reasoning"],
-            confidence=result["confidence"]
+            confidence=result["confidence"],
+            token_usage=result.get("token_usage")
         )

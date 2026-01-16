@@ -1,8 +1,16 @@
+export interface TokenUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+}
+
 export interface DimensionScore {
   dimension: string;
   score: number;
   reasoning: string;
   confidence: number;
+  token_usage?: TokenUsage;
 }
 
 export interface IdeaScore {
@@ -14,6 +22,8 @@ export interface IdeaScore {
   key_strengths: string[];
   key_concerns: string[];
   timestamp: string;
+  total_tokens: number;
+  total_cost_usd: number;
 }
 
 export interface ScoringRequest {
