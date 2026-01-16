@@ -61,6 +61,7 @@ async def startup_event():
     logger.info("Starting VB Idea Scorer API")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"OpenAI API Key configured: {'Yes' if settings.openai_api_key else 'No'}")
+    logger.info(f"Google API Key configured: {'Yes' if settings.google_api_key else 'No'}")
 
 
 @app.on_event("shutdown")

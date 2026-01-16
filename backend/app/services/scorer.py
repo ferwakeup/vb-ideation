@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List
 import logging
 from app.services.url_fetcher import URLFetcher
-from app.services.openai_service import OpenAIService
+from app.services.ai_service import AIService
 from app.models.score import IdeaScore, DimensionScore
 from app.utils.prompts import SCORING_DIMENSIONS
 from app.utils.aggregation import calculate_weighted_score, generate_recommendation
@@ -27,15 +27,22 @@ class IdeaScorer:
     6. Extract key insights
     """
 
-    def __init__(self, openai_api_key: str):
+    def __init__(self, model: str = "gpt-4o", openai_api_key: str = "", google_api_key: str = ""):
         """
         Initialize the scorer with required services.
 
         Args:
-            openai_api_key: OpenAI API key
+            model: AI model to use (default: gpt-4o)
+            openai_api_key: OpenAI API key (if using OpenAI models)
+            google_api_key: Google API key (if using Gemini models)
         """
         self.url_fetcher = URLFetcher()
-        self.openai_service = OpenAIService(api_key=openai_api_key)
+        self.ai_service = AIService(
+            model=model,
+            openai_api_key=openai_api_key,
+            google_api_key=google_api_key
+        )
+        self.model = model
 
     async def score_idea(self, urls: List[str]) -> IdeaScore:
         """
@@ -70,7 +77,7 @@ class IdeaScorer:
 
             # Step 2: Extract idea summary
             logger.info("Step 2: Extracting idea summary")
-            idea_summary = await self.openai_service.extract_idea_summary(combined_content)
+            idea_summary = await self.ai_service.extract_idea_summary(combined_content)
 
             # Step 3: Score all dimensions in parallel
             logger.info("Step 3: Scoring all dimensions in parallel")
@@ -91,7 +98,7 @@ class IdeaScorer:
                 }
                 for ds in dimension_scores
             ]
-            insights = await self.openai_service.extract_insights(dimension_scores_for_insights)
+            insights = await self.ai_service.extract_insights(dimension_scores_for_insights)
 
             # Calculate total tokens and cost
             total_tokens = 0
@@ -111,6 +118,7 @@ class IdeaScorer:
                 key_strengths=insights["strengths"],
                 key_concerns=insights["concerns"],
                 timestamp=datetime.utcnow().isoformat() + "Z",
+                model_used=self.model,
                 total_tokens=total_tokens,
                 total_cost_usd=round(total_cost, 4)
             )
@@ -175,7 +183,7 @@ class IdeaScorer:
         Returns:
             DimensionScore object
         """
-        result = await self.openai_service.score_dimension(content, dimension_key)
+        result = await self.ai_service.score_dimension(content, dimension_key)
 
         return DimensionScore(
             dimension=SCORING_DIMENSIONS[dimension_key]["name"],

@@ -22,6 +22,7 @@ export interface IdeaScore {
   key_strengths: string[];
   key_concerns: string[];
   timestamp: string;
+  model_used: string;
   total_tokens: number;
   total_cost_usd: number;
 }
@@ -29,6 +30,7 @@ export interface IdeaScore {
 export interface ScoringRequest {
   urls?: string[];
   url_source?: 'config';
+  model?: string;
 }
 
 export interface URLsResponse {

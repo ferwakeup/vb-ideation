@@ -15,22 +15,28 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def get_scorer(settings: Settings = Depends(get_settings)) -> IdeaScorer:
-    """Dependency to get scorer instance."""
-    return IdeaScorer(openai_api_key=settings.openai_api_key)
+def get_scorer_factory(settings: Settings = Depends(get_settings)):
+    """Factory to create scorer instances with specific models."""
+    def create_scorer(model: str = "gpt-4o") -> IdeaScorer:
+        return IdeaScorer(
+            model=model,
+            openai_api_key=settings.openai_api_key,
+            google_api_key=settings.google_api_key
+        )
+    return create_scorer
 
 
 @router.post("/score", response_model=IdeaScore)
 async def score_idea(
     request: ScoringRequest,
-    scorer: IdeaScorer = Depends(get_scorer),
-    settings: Settings = Depends(get_settings)
+    settings: Settings = Depends(get_settings),
+    scorer_factory = Depends(get_scorer_factory)
 ):
     """
     Score a business idea from URLs.
 
     Args:
-        request: ScoringRequest with either urls list or url_source='config'
+        request: ScoringRequest with either urls list or url_source='config' and optional model
 
     Returns:
         Complete IdeaScore with all dimension scores and recommendation
@@ -53,7 +59,10 @@ async def score_idea(
                 detail="Must provide either 'urls' or 'url_source=config'"
             )
 
-        logger.info(f"Scoring idea from {len(urls)} URL(s)")
+        # Create scorer with specified model
+        model = request.model or "gpt-4o"
+        logger.info(f"Scoring idea from {len(urls)} URL(s) using model: {model}")
+        scorer = scorer_factory(model=model)
 
         # Perform scoring
         result = await scorer.score_idea(urls)

@@ -32,6 +32,7 @@ class IdeaScore(BaseModel):
     key_strengths: List[str] = Field(..., description="Top strengths of the idea")
     key_concerns: List[str] = Field(..., description="Top concerns about the idea")
     timestamp: str = Field(..., description="ISO timestamp of when scoring was performed")
+    model_used: str = Field(default="gpt-4o", description="AI model used for analysis")
     total_tokens: int = Field(default=0, description="Total tokens used across all API calls")
     total_cost_usd: float = Field(default=0.0, description="Total estimated cost in USD")
 
@@ -40,10 +41,12 @@ class ScoringRequest(BaseModel):
     """Request to score a business idea."""
     urls: List[str] = Field(default=None, description="List of URLs to analyze")
     url_source: str = Field(default=None, description="Use 'config' to load from config file")
+    model: str = Field(default="gpt-4o", description="OpenAI model to use for analysis")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "urls": ["https://example.com/business-idea"],
+                "model": "gpt-4o"
             }
         }

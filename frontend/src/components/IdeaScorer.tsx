@@ -8,9 +8,23 @@ import ScoreCard from './ScoreCard';
 import ScoreChart from './ScoreChart';
 import LoadingSpinner from './LoadingSpinner';
 
+const MODEL_OPTIONS = [
+  // OpenAI Models
+  { value: 'gpt-4o', label: '🤖 GPT-4o (OpenAI)', provider: 'OpenAI', description: 'Best quality, moderate cost (~$0.10-0.20)' },
+  { value: 'gpt-4o-mini', label: '🤖 GPT-4o Mini (OpenAI)', provider: 'OpenAI', description: 'Fast & cheap (~$0.01-0.02)' },
+  { value: 'gpt-4-turbo', label: '🤖 GPT-4 Turbo (OpenAI)', provider: 'OpenAI', description: 'High quality (~$0.30-0.50)' },
+  { value: 'gpt-4', label: '🤖 GPT-4 (OpenAI)', provider: 'OpenAI', description: 'Highest quality (~$0.60-1.00)' },
+  // Google Gemini Models
+  { value: 'gemini-2.5-pro', label: '✨ Gemini 2.5 Pro (Google)', provider: 'Google', description: 'Excellent quality (~$0.05-0.15)' },
+  { value: 'gemini-2.5-flash', label: '✨ Gemini 2.5 Flash (Google)', provider: 'Google', description: 'Very fast & cheap (~$0.005-0.01)' },
+  { value: 'gemini-flash-latest', label: '✨ Gemini Flash Latest (Google)', provider: 'Google', description: 'Latest flash model (~$0.005-0.01)' },
+  { value: 'gemini-pro-latest', label: '✨ Gemini Pro Latest (Google)', provider: 'Google', description: 'Latest pro model (~$0.05-0.15)' },
+];
+
 export default function IdeaScorer() {
   const [useConfig, setUseConfig] = useState(true);
   const [customUrls, setCustomUrls] = useState<string[]>(['']);
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
 
   const scoreMutation = useMutation({
     mutationFn: api.scoreIdea,
@@ -18,14 +32,14 @@ export default function IdeaScorer() {
 
   const handleScore = () => {
     if (useConfig) {
-      scoreMutation.mutate({ url_source: 'config' });
+      scoreMutation.mutate({ url_source: 'config', model: selectedModel });
     } else {
       const validUrls = customUrls.filter(u => u.trim());
       if (validUrls.length === 0) {
         alert('Please enter at least one URL');
         return;
       }
-      scoreMutation.mutate({ urls: validUrls });
+      scoreMutation.mutate({ urls: validUrls, model: selectedModel });
     }
   };
 
@@ -75,6 +89,27 @@ export default function IdeaScorer() {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Input Configuration
           </h2>
+
+          {/* Model Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              AI Model Selection
+            </label>
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {MODEL_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label} - {option.description}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Selected: <span className="font-semibold">{MODEL_OPTIONS.find(m => m.value === selectedModel)?.label}</span>
+            </p>
+          </div>
 
           <div className="mb-4">
             <label className="flex items-center cursor-pointer">
@@ -183,6 +218,12 @@ export default function IdeaScorer() {
 
               {/* Cost Summary */}
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <div className="mb-2 text-center">
+                  <span className="text-xs text-gray-600">Analyzed using: </span>
+                  <span className="text-sm font-bold text-blue-800">
+                    {scoreMutation.data.model_used.toUpperCase()}
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                   <div>
                     <div className="text-sm text-gray-600 mb-1">Total Tokens Used</div>

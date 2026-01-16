@@ -9,8 +9,9 @@ import os
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # OpenAI API
-    openai_api_key: str
+    # AI Provider API Keys
+    openai_api_key: str = ""
+    google_api_key: str = ""
 
     # URL configuration
     urls_config_path: str = "config/urls.json"

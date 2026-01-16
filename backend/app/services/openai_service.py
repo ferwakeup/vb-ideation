@@ -17,29 +17,53 @@ from app.models.score import TokenUsage
 
 logger = logging.getLogger(__name__)
 
-# GPT-4o pricing (as of January 2025)
+# OpenAI Model Pricing (as of January 2025)
 # https://openai.com/api/pricing/
-GPT4O_INPUT_PRICE = 2.50 / 1_000_000  # $2.50 per 1M input tokens
-GPT4O_OUTPUT_PRICE = 10.00 / 1_000_000  # $10.00 per 1M output tokens
+MODEL_PRICING = {
+    "gpt-4o": {
+        "input": 2.50 / 1_000_000,   # $2.50 per 1M input tokens
+        "output": 10.00 / 1_000_000   # $10.00 per 1M output tokens
+    },
+    "gpt-4o-mini": {
+        "input": 0.150 / 1_000_000,  # $0.15 per 1M input tokens
+        "output": 0.600 / 1_000_000   # $0.60 per 1M output tokens
+    },
+    "gpt-4-turbo": {
+        "input": 10.00 / 1_000_000,  # $10.00 per 1M input tokens
+        "output": 30.00 / 1_000_000   # $30.00 per 1M output tokens
+    },
+    "gpt-4": {
+        "input": 30.00 / 1_000_000,  # $30.00 per 1M input tokens
+        "output": 60.00 / 1_000_000   # $60.00 per 1M output tokens
+    }
+}
 
 
 class OpenAIService:
     """Handles all OpenAI API interactions for idea scoring."""
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, model: str = "gpt-4o"):
         """
         Initialize OpenAI service.
 
         Args:
             api_key: OpenAI API key
+            model: OpenAI model to use (default: gpt-4o)
         """
         self.client = AsyncOpenAI(api_key=api_key)
-        self.model = "gpt-4o"
+        self.model = model
         self.temperature = 0.3  # Lower temperature for more consistent results
+
+        # Validate model
+        if model not in MODEL_PRICING:
+            logger.warning(f"Model {model} not in pricing table, using default pricing")
+            self.pricing = MODEL_PRICING["gpt-4o"]
+        else:
+            self.pricing = MODEL_PRICING[model]
 
     def _calculate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:
         """
-        Calculate cost based on token usage.
+        Calculate cost based on token usage and model pricing.
 
         Args:
             prompt_tokens: Number of input tokens
@@ -48,8 +72,8 @@ class OpenAIService:
         Returns:
             Cost in USD
         """
-        input_cost = prompt_tokens * GPT4O_INPUT_PRICE
-        output_cost = completion_tokens * GPT4O_OUTPUT_PRICE
+        input_cost = prompt_tokens * self.pricing["input"]
+        output_cost = completion_tokens * self.pricing["output"]
         return round(input_cost + output_cost, 6)
 
     def _create_token_usage(self, usage) -> TokenUsage:
