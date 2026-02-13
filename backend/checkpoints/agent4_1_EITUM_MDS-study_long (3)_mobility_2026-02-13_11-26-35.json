@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-02-13T11:26:35.369544",
+  "provider": "groq",
+  "model": "llama-3.3-70b-versatile",
+  "pdf_path": "/var/folders/h1/l7455l4j71787yb6zmpp1vgr0000gn/T/tmp1ughf8vw/EITUM_MDS-study_long (3).pdf",
+  "sector": "mobility",
+  "data": {
+    "summary": "DataSpaceHub is a trusted mobility data exchange platform that enables secure, standardized, and efficient data sharing between public and private sector organizations in the mobility sector, such as transportation authorities, logistics companies, and mobility service providers. By leveraging blockchain technology, the platform addresses the significant gap in accessibility of quality mobility data, facilitating the development of innovative data-driven services and cost savings for its target customer segment. With a potential market size of €270 billion by 2028 in the European mobility data space, DataSpaceHub offers a unique value proposition through its focus on mobility data and use of blockchain technology, providing a secure and transparent ecosystem for data exchange. By doing so, it empowers stakeholders to make data-driven decisions, driving growth and innovation in the mobility sector."
+  }
+}
