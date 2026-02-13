@@ -25,6 +25,7 @@ from app.models.score import (
 from app.services.scorer import IdeaScorer
 from app.services.mas_scorer import MASScorer
 from app.config import get_settings, Settings
+from app.services.agents.progress import get_architecture, get_all_steps_info
 
 logger = logging.getLogger(__name__)
 
@@ -266,6 +267,18 @@ async def score_pdf_stream(
             """Generate SSE events for progress and final result."""
             progress_queue: Queue = Queue()
             result_holder = {"result": None, "error": None}
+
+            # Send architecture info first for debug panel
+            arch_event = {
+                "architecture": get_architecture(),
+                "steps": get_all_steps_info(),
+                "model_info": {
+                    "provider": provider,
+                    "model": model or "default",
+                    "deployment": "local" if provider.lower() == "ollama" else "cloud"
+                }
+            }
+            yield f"event: init\ndata: {json.dumps(arch_event)}\n\n"
 
             def progress_callback(event: dict):
                 """Callback to push progress events to the queue."""

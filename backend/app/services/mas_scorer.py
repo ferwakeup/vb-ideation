@@ -94,8 +94,12 @@ class MASScorer:
         Returns:
             Complete scoring result dict
         """
-        # Initialize progress reporter
-        progress = ProgressReporter(progress_callback)
+        # Initialize progress reporter with model info
+        progress = ProgressReporter(
+            callback=progress_callback,
+            provider=self.provider,
+            model=self.llm_factory.model
+        )
         start_time = datetime.now()
         logger.info(f"Starting MAS scoring for {pdf_path} (sector: {sector})")
 

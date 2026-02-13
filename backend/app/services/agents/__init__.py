@@ -19,7 +19,10 @@ from app.services.agents.progress import (
     ProgressStep,
     ProgressStatus,
     PROGRESS_STEPS,
-    TOTAL_STEPS
+    TOTAL_STEPS,
+    AGENT_ARCHITECTURE,
+    get_architecture,
+    get_all_steps_info
 )
 
 __all__ = [
@@ -32,5 +35,8 @@ __all__ = [
     "ProgressStep",
     "ProgressStatus",
     "PROGRESS_STEPS",
-    "TOTAL_STEPS"
+    "TOTAL_STEPS",
+    "AGENT_ARCHITECTURE",
+    "get_architecture",
+    "get_all_steps_info"
 ]
