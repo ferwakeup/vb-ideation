@@ -1,0 +1,76 @@
+INFORME DE MOVILIDAD URBANA 2024
+
+RESUMEN EJECUTIVO
+
+El sector de movilidad urbana está experimentando una transformación digital significativa.
+Este informe presenta las principales tendencias, métricas clave y oportunidades identificadas
+en el mercado global de movilidad.
+
+MÉTRICAS CLAVE DEL MERCADO
+
+El mercado global de movilidad urbana alcanzó los 280 mil millones de dólares en 2023,
+con una tasa de crecimiento anual compuesta (CAGR) del 12.5%. Las proyecciones indican
+que el mercado alcanzará los 500 mil millones de dólares para 2030.
+
+La adopción de vehículos eléctricos (EV) experimentó un crecimiento del 65% en el último año,
+representando actualmente el 18% de todas las ventas de vehículos nuevos en mercados desarrollados.
+
+Las aplicaciones de movilidad compartida registraron 850 millones de usuarios activos mensuales
+a nivel global, un incremento del 28% respecto al año anterior.
+
+TENDENCIAS PRINCIPALES
+
+1. Multimodalidad Integrada
+Los usuarios demandan soluciones que integren múltiples formas de transporte en una sola plataforma.
+El 73% de los usuarios urbanos pagarían más por una solución verdaderamente integrada.
+
+2. Movilidad como Servicio (MaaS)
+El concepto de MaaS está ganando tracción en ciudades principales. Sin embargo, el 68% de las
+ciudades medianas aún no tienen infraestructura para soportar MaaS.
+
+3. Electrificación del Transporte
+Las ciudades están implementando zonas de bajas emisiones, creando presión sobre operadores
+tradicionales para electrificar sus flotas.
+
+4. Micromovilidad
+Los scooters y bicicletas eléctricas representan el 35% de los viajes cortos (menores a 5 km)
+en ciudades con infraestructura adecuada. El mercado de micromovilidad creció 89% en 2023.
+
+PROBLEMAS IDENTIFICADOS
+
+Fragmentación de Servicios: Los usuarios deben gestionar múltiples aplicaciones y métodos de pago.
+No existe una solución unificada que funcione consistentemente en diferentes ciudades.
+
+Última Milla: El 57% de los usuarios enfrentan problemas de conectividad para completar el
+último kilómetro de su viaje, especialmente en áreas suburbanas.
+
+Datos Aislados: Los datos de movilidad están fragmentados entre operadores públicos y privados,
+limitando la optimización sistémica del transporte urbano.
+
+Infraestructura de Carga: Existe un déficit significativo de estaciones de carga para vehículos
+eléctricos. La demanda supera la oferta en un 40%.
+
+OPORTUNIDADES DE NEGOCIO
+
+1. Plataformas MaaS para ciudades medianas sin infraestructura actual
+2. Soluciones de última milla con vehículos eléctricos ligeros
+3. Sistemas de carga inteligente con optimización de demanda
+4. Plataformas de datos abiertos para integración público-privada
+5. Servicios de consultoría en electrificación de flotas
+
+CONCLUSIONES
+
+El sector de movilidad presenta oportunidades significativas para emprendedores que puedan
+abordar los gaps de integración, infraestructura y última milla. Las soluciones que combinen
+sostenibilidad con conveniencia para el usuario tienen el mayor potencial de adopción.
+
+La transformación digital del transporte urbano está creando un ecosistema favorable para
+nuevos entrantes que puedan ofrecer valor diferenciado a través de la tecnología.
+
+METODOLOGÍA
+
+Este informe se basa en:
+- Análisis de 150 ciudades globales
+- Entrevistas con 50 operadores de movilidad
+- Datos de uso de 20 millones de usuarios
+- Proyecciones de 5 firmas de análisis de mercado
