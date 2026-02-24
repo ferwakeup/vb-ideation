@@ -4,8 +4,9 @@ Multi-Agent System for Business Idea Evaluation.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import scoring
+from app.routers import scoring, auth
 from app.config import get_settings
+from app.database import engine, Base
 import logging
 
 # Configure logging
@@ -48,7 +49,8 @@ app.add_middleware(
         "http://localhost:5173",  # Vite default dev server
         "http://localhost:3000",  # Alternative React dev port
         "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000"
+        "http://127.0.0.1:3000",
+        "https://scorer.moven.pro",  # Production domain
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -57,6 +59,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(scoring.router, prefix="/api/v1", tags=["scoring"])
+app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 
 
 @app.get("/")
@@ -78,6 +81,13 @@ async def root():
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
+    # Import models to ensure they are registered with SQLAlchemy
+    from app.models import user  # noqa: F401
+
+    # Create database tables
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created/verified")
+
     logger.info("=" * 60)
     logger.info("Starting VB Idea Scorer API v2.0.0 (Multi-Agent System)")
     logger.info("=" * 60)

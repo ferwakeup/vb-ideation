@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = True
 
+    # JWT settings
+    jwt_secret_key: str = "your-secret-key-change-in-production"
+
     class Config:
         env_file = ".env"
         case_sensitive = False

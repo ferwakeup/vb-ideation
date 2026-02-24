@@ -9,7 +9,11 @@ import type {
   PDFScoringRequest,
   PDFScoringResult,
   ProgressEvent,
-  InitEvent
+  InitEvent,
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+  User
 } from '../types/index';
 
 const API_BASE = 'http://localhost:8000/api/v1';
@@ -137,6 +141,32 @@ export const api = {
    */
   healthCheck: async (): Promise<{ status: string }> => {
     const response = await axios.get(`${API_BASE}/health`);
+    return response.data;
+  },
+
+  /**
+   * Login user
+   */
+  login: async (request: LoginRequest): Promise<AuthResponse> => {
+    const response = await axios.post(`${API_BASE}/auth/login`, request);
+    return response.data;
+  },
+
+  /**
+   * Register user
+   */
+  register: async (request: RegisterRequest): Promise<User> => {
+    const response = await axios.post(`${API_BASE}/auth/register`, request);
+    return response.data;
+  },
+
+  /**
+   * Get current user info
+   */
+  getMe: async (token: string): Promise<User> => {
+    const response = await axios.get(`${API_BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   }
 };

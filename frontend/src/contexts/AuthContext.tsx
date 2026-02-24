@@ -1,0 +1,110 @@
+/**
+ * Authentication Context
+ * Provides authentication state and methods throughout the app
+ */
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { api } from '../services/api';
+import type { User, LoginRequest, RegisterRequest } from '../types/index';
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (request: LoginRequest) => Promise<void>;
+  register: (request: RegisterRequest) => Promise<void>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const TOKEN_KEY = 'vb_auth_token';
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check for existing token on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const storedToken = localStorage.getItem(TOKEN_KEY);
+      if (storedToken) {
+        try {
+          const userData = await api.getMe(storedToken);
+          setUser(userData);
+          setToken(storedToken);
+        } catch {
+          // Token is invalid, clear it
+          localStorage.removeItem(TOKEN_KEY);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const login = useCallback(async (request: LoginRequest) => {
+    const response = await api.login(request);
+    const newToken = response.access_token;
+
+    // Store token
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+
+    // Fetch user data
+    const userData = await api.getMe(newToken);
+    setUser(userData);
+  }, []);
+
+  const register = useCallback(async (request: RegisterRequest) => {
+    // Register the user
+    await api.register(request);
+
+    // Auto-login after registration
+    const loginResponse = await api.login({
+      email: request.email,
+      password: request.password
+    });
+    const newToken = loginResponse.access_token;
+
+    // Store token
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+
+    // Fetch user data
+    const userData = await api.getMe(newToken);
+    setUser(userData);
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        register,
+        logout
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
