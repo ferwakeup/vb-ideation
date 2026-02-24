@@ -153,7 +153,6 @@ async def resend_verification(
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """
     Login and get an access token.
-    User must be verified to log in.
     """
     user = authenticate_user(db, user_data.email, user_data.password)
 
@@ -162,12 +161,6 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Please verify your email before logging in. Check your inbox for the verification link."
         )
 
     # Create access token
