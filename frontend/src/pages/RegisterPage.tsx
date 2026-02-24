@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = (): boolean => {
@@ -53,7 +54,10 @@ export default function RegisterPage() {
 
     try {
       await register({ email, password, full_name: fullName });
-      navigate('/app');
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/app');
+      }, 2000);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
@@ -96,6 +100,12 @@ export default function RegisterPage() {
           {error && (
             <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-900/50 border border-green-700 text-green-200 px-4 py-3 rounded-lg mb-6">
+              Account created successfully! Redirecting...
             </div>
           )}
 
