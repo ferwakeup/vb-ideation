@@ -14,11 +14,11 @@ jobs:
     - name: ⚙️ Configurar Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 18 # O la versión que uses localmente
+        node-version: 18
 
     - name: 📦 Instalar dependencias y Compilar
       run: |
-        cd frontend  # Entramos en la carpeta donde está el React
+        cd frontend
         npm install
         npm run build
 
@@ -28,6 +28,9 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        # Subimos solo el contenido de la carpeta 'dist' (o 'build')
+        # IMPORTANTE: Subimos solo el contenido de la carpeta compilada
+        # Si usas Vite es 'dist', si usas Create React App es 'build'
         local-dir: ./frontend/dist/ 
         server-dir: ./
+        # FIX para el error ECONNRESET:
+        concurrency: 1
