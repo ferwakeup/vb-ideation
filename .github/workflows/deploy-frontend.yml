@@ -3,7 +3,9 @@ on:
   push:
     branches:
       - main
-
+    paths:
+      - 'frontend/**'  # Solo se activa si hay cambios en el frontend
+      - '.github/workflows/deploy-frontend.yml' # O si cambias el propio script
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
