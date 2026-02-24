@@ -25,7 +25,8 @@ langgraph>=0.1.0
 # Database & Auth
 sqlalchemy==2.0.46
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+passlib==1.7.4
+bcrypt==4.0.1
 
 # PDF processing
 pymupdf>=1.23.0
