@@ -16,7 +16,9 @@ import type {
   User
 } from '../types/index';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.PROD
+  ? 'https://vb-ideation.onrender.com/api/v1'
+  : 'http://localhost:8000/api/v1';
 
 export const api = {
   /**
