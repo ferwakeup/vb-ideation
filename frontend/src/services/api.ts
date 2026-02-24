@@ -12,7 +12,10 @@ import type {
   InitEvent,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
   AuthResponse,
+  VerifyEmailRequest,
+  ResendVerificationRequest,
   User
 } from '../types/index';
 
@@ -157,8 +160,24 @@ export const api = {
   /**
    * Register user
    */
-  register: async (request: RegisterRequest): Promise<User> => {
+  register: async (request: RegisterRequest): Promise<RegisterResponse> => {
     const response = await axios.post(`${API_BASE}/auth/register`, request);
+    return response.data;
+  },
+
+  /**
+   * Verify email with token
+   */
+  verifyEmail: async (request: VerifyEmailRequest): Promise<{ message: string }> => {
+    const response = await axios.post(`${API_BASE}/auth/verify-email`, request);
+    return response.data;
+  },
+
+  /**
+   * Resend verification email
+   */
+  resendVerification: async (request: ResendVerificationRequest): Promise<{ message: string }> => {
+    const response = await axios.post(`${API_BASE}/auth/resend-verification`, request);
     return response.data;
   },
 

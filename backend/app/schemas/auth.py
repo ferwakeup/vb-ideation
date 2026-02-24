@@ -33,6 +33,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     is_active: bool
+    is_verified: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -40,10 +41,28 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+class RegisterResponse(BaseModel):
+    """Schema for registration response."""
+    message: str
+    email: str
+    requires_verification: bool = True
+
+
+class VerifyEmailRequest(BaseModel):
+    """Schema for email verification request."""
+    token: str
+
+
+class ResendVerificationRequest(BaseModel):
+    """Schema for resending verification email."""
+    email: EmailStr
+
+
 class Token(BaseModel):
     """Schema for JWT token response."""
     access_token: str
     token_type: str = "bearer"
+    is_verified: bool = True
 
 
 class TokenData(BaseModel):

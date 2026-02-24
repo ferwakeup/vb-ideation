@@ -77,15 +77,54 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     return user
 
 
-def create_user(db: Session, email: str, password: str, full_name: str) -> User:
-    """Create a new user."""
+def create_user(
+    db: Session,
+    email: str,
+    password: str,
+    full_name: str,
+    verification_token: Optional[str] = None,
+    verification_token_expires: Optional[datetime] = None
+) -> User:
+    """Create a new user with optional verification token."""
     hashed_password = get_password_hash(password)
     user = User(
         email=email.lower(),
         hashed_password=hashed_password,
-        full_name=full_name
+        full_name=full_name,
+        is_verified=False,
+        verification_token=verification_token,
+        verification_token_expires=verification_token_expires
     )
     db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def get_user_by_verification_token(db: Session, token: str) -> Optional[User]:
+    """Get a user by verification token."""
+    return db.query(User).filter(User.verification_token == token).first()
+
+
+def verify_user(db: Session, user: User) -> User:
+    """Mark user as verified and clear verification token."""
+    user.is_verified = True
+    user.verification_token = None
+    user.verification_token_expires = None
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_verification_token(
+    db: Session,
+    user: User,
+    token: str,
+    expires: datetime
+) -> User:
+    """Update user's verification token."""
+    user.verification_token = token
+    user.verification_token_expires = expires
     db.commit()
     db.refresh(user)
     return user

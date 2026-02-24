@@ -1,14 +1,13 @@
 /**
  * Register Page Component
- * User registration form with @moven.pro validation
+ * User registration form with @moven.pro validation and email verification
  */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from '../components/Spinner';
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
   const { register } = useAuth();
 
   const [fullName, setFullName] = useState('');
@@ -56,9 +55,6 @@ export default function RegisterPage() {
     try {
       await register({ email, password, full_name: fullName });
       setSuccess(true);
-      setTimeout(() => {
-        navigate('/app');
-      }, 2000);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
@@ -77,6 +73,58 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
+
+  // Show success screen after registration
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <Link to="/" className="inline-flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="text-white font-bold text-2xl">VB Ideation</span>
+            </Link>
+          </div>
+
+          {/* Success Card */}
+          <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 shadow-xl text-center">
+            <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Check your email</h1>
+            <p className="text-gray-400 mb-6">
+              We've sent a verification link to<br />
+              <span className="text-white font-medium">{email}</span>
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Click the link in the email to verify your account. The link will expire in 24 hours.
+            </p>
+            <div className="space-y-3">
+              <Link
+                to="/login"
+                className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
+              >
+                Go to Login
+              </Link>
+              <p className="text-sm text-gray-500">
+                Didn't receive the email?{' '}
+                <Link to="/resend-verification" className="text-blue-500 hover:text-blue-400">
+                  Resend verification
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-6 py-12">
@@ -101,12 +149,6 @@ export default function RegisterPage() {
           {error && (
             <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6 animate-in fade-in duration-200">
               {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-900/50 border border-green-700 text-green-200 px-4 py-3 rounded-lg mb-6 animate-in fade-in duration-200">
-              Account created successfully! Redirecting...
             </div>
           )}
 
@@ -177,20 +219,13 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={isLoading || success}
+              disabled={isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
                   <Spinner size="sm" />
                   <span>Creating account...</span>
-                </>
-              ) : success ? (
-                <>
-                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Account Created!</span>
                 </>
               ) : (
                 'Create Account'

@@ -138,6 +138,7 @@ export interface User {
   email: string;
   full_name: string;
   is_active: boolean;
+  is_verified: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -153,9 +154,24 @@ export interface RegisterRequest {
   full_name: string;
 }
 
+export interface RegisterResponse {
+  message: string;
+  email: string;
+  requires_verification: boolean;
+}
+
 export interface AuthResponse {
   access_token: string;
   token_type: string;
+  is_verified: boolean;
+}
+
+export interface VerifyEmailRequest {
+  token: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
 }
 
 export interface AuthState {

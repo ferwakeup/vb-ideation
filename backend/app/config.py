@@ -41,6 +41,16 @@ class Settings(BaseSettings):
     # JWT settings
     jwt_secret_key: str = "your-secret-key-change-in-production"
 
+    # Email settings
+    resend_api_key: str = ""  # Resend API key (preferred)
+    smtp_host: str = ""  # SMTP server host
+    smtp_port: int = 587  # SMTP server port
+    smtp_username: str = ""  # SMTP username
+    smtp_password: str = ""  # SMTP password
+    smtp_tls: bool = True  # Use TLS
+    email_from: str = "VB Ideation <noreply@moven.pro>"  # From address
+    frontend_url: str = "https://scorer.moven.pro"  # Frontend URL for verification links
+
     class Config:
         env_file = ".env"
         case_sensitive = False
