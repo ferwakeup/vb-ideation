@@ -28,6 +28,7 @@ passlib[bcrypt]==1.7.4
 
 # PDF processing
 pymupdf>=1.23.0
+pypdf>=3.0.0
 beautifulsoup4==4.12.3
 
 # HTTP clients
