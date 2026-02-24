@@ -1,0 +1,17 @@
+name: Deploy Backend to Render
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**' # Solo se activa si cambias archivos en la carpeta backend
+
+jobs:
+  deploy:
+    name: 🚀 Trigger Render Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📢 Call Render Deploy Hook
+        # Este comando le dice a Render: "Hey, hay código nuevo, descárgalo y despliega"
+        run: |
+          curl -f "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
