@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import scoring, auth
 from app.config import get_settings
-from app.database import engine, Base
+from app.database import engine, Base, run_migrations
 import logging
 
 # Configure logging
@@ -85,7 +85,11 @@ async def startup_event():
     # Import models to ensure they are registered with SQLAlchemy
     from app.models import user  # noqa: F401
 
-    # Create database tables
+    # Run migrations to add any missing columns
+    run_migrations()
+    logger.info("Database migrations completed")
+
+    # Create database tables (for new installations)
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created/verified")
 
