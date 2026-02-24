@@ -1,21 +1,33 @@
-name: Deploy to Nuxit
+name: Deploy React Scorer to Nuxit
 on:
   push:
     branches:
-      - main  # O la rama que uses
+      - main
 
 jobs:
-  web-deploy:
-    name: Deploy
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Get latest code
+    - name: 🚚 Descargar código
       uses: actions/checkout@v3
 
-    - name: Sync files
+    - name: ⚙️ Configurar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18 # O la versión que uses localmente
+
+    - name: 📦 Instalar dependencias y Compilar
+      run: |
+        cd frontend  # Entramos en la carpeta donde está el React
+        npm install
+        npm run build
+
+    - name: 📂 Sincronizar archivos vía FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: www/uoz3486/moven/scorer/  # Ajusta esta ruta según lo visto en el paso 1
+        # Subimos solo el contenido de la carpeta 'dist' (o 'build')
+        local-dir: ./frontend/dist/ 
+        server-dir: ./
