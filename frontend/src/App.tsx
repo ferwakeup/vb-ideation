@@ -7,6 +7,7 @@ import { HistoryProvider } from './contexts/HistoryContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import IdeaScorer from './components/IdeaScorer';
 import History from './components/History';
 import LandingPage from './pages/LandingPage';
@@ -51,7 +52,7 @@ function App() {
               >
                 <Route index element={<IdeaScorer />} />
                 <Route path="history" element={<History />} />
-                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
               </Route>
             </Routes>
           </BrowserRouter>
