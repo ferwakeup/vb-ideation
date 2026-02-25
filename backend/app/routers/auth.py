@@ -89,25 +89,45 @@ async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db
     """
     Verify user's email with the token sent via email.
     """
-    user = get_user_by_verification_token(db, request.token)
+    import logging
+    logger = logging.getLogger(__name__)
 
-    if not user:
+    try:
+        user = get_user_by_verification_token(db, request.token)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification token"
+            )
+
+        # Check if token has expired
+        if user.verification_token_expires:
+            now = datetime.now(timezone.utc)
+            # Handle both timezone-aware and naive datetimes from DB
+            token_expires = user.verification_token_expires
+            if token_expires.tzinfo is None:
+                # If naive, assume it's UTC
+                token_expires = token_expires.replace(tzinfo=timezone.utc)
+
+            if token_expires < now:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Verification token has expired. Please request a new one."
+                )
+
+        # Verify the user
+        verify_user(db, user)
+
+        return {"message": "Email verified successfully. You can now log in."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error verifying email: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification token"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Verification failed: {str(e)}"
         )
-
-    # Check if token has expired
-    if user.verification_token_expires and user.verification_token_expires < datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verification token has expired. Please request a new one."
-        )
-
-    # Verify the user
-    verify_user(db, user)
-
-    return {"message": "Email verified successfully. You can now log in."}
 
 
 @router.post("/resend-verification")
