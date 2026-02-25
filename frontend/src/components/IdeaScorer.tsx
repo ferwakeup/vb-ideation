@@ -64,7 +64,7 @@ export default function IdeaScorer() {
   // PDF mode state
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [sector, setSector] = useState('mobility');
-  const [pdfProvider, setPdfProvider] = useState('anthropic');
+  const [pdfProvider] = useState('groq');
   const [isPdfScoring, setIsPdfScoring] = useState(false);
   const [pdfProgress, setPdfProgress] = useState<ProgressEvent | null>(null);
   const [pdfResult, setPdfResult] = useState<PDFScoringResult | null>(null);
@@ -374,22 +374,16 @@ export default function IdeaScorer() {
                 </select>
               </div>
 
-              {/* Provider Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  AI Provider
-                </label>
-                <select
-                  value={pdfProvider}
-                  onChange={(e) => setPdfProvider(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {PDF_PROVIDER_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label} ({option.model})
-                    </option>
-                  ))}
-                </select>
+              {/* AI Provider Info */}
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-800">
+                    Powered by Groq (Llama 3.3 70B) - Fast & Free
+                  </span>
+                </div>
               </div>
 
               <button
