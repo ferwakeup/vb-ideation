@@ -127,7 +127,7 @@ async def _send_via_resend(
                     "Content-Type": "application/json"
                 },
                 json={
-                    "from": settings.email_from,
+                    "from": settings.sender_email,
                     "to": [to_email],
                     "subject": subject,
                     "html": html_content,
@@ -156,7 +156,7 @@ async def _send_via_smtp(
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = settings.email_from
+        msg["From"] = settings.sender_email
         msg["To"] = to_email
 
         msg.attach(MIMEText(text_content, "plain"))
@@ -167,7 +167,7 @@ async def _send_via_smtp(
                 server.starttls()
             if settings.smtp_username and settings.smtp_password:
                 server.login(settings.smtp_username, settings.smtp_password)
-            server.sendmail(settings.email_from, to_email, msg.as_string())
+            server.sendmail(settings.sender_email, to_email, msg.as_string())
 
         logger.info(f"Verification email sent to {to_email} via SMTP")
         return True

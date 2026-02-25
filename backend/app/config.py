@@ -43,13 +43,19 @@ class Settings(BaseSettings):
 
     # Email settings
     resend_api_key: str = ""  # Resend API key (preferred)
+    resend_from_email: str = ""  # Resend from address (takes precedence over email_from)
     smtp_host: str = ""  # SMTP server host
     smtp_port: int = 587  # SMTP server port
     smtp_username: str = ""  # SMTP username
     smtp_password: str = ""  # SMTP password
     smtp_tls: bool = True  # Use TLS
-    email_from: str = "VB Ideation <noreply@moven.pro>"  # From address
+    email_from: str = "VB Ideation <noreply@moven.pro>"  # Default from address
     frontend_url: str = "https://scorer.moven.pro"  # Frontend URL for verification links
+
+    @property
+    def sender_email(self) -> str:
+        """Get the email sender address, preferring resend_from_email if set."""
+        return self.resend_from_email or self.email_from
 
     class Config:
         env_file = ".env"
