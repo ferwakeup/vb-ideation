@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { useHistory, type HistoryEntry } from '../contexts/HistoryContext';
 
-type SortField = 'timestamp' | 'fileName' | 'sector' | 'overallScore' | 'recommendation' | string;
+type SortField = 'timestamp' | 'fileName' | 'user' | 'sector' | 'overallScore' | 'recommendation' | string;
 type SortDirection = 'asc' | 'desc';
 
 // Standard dimension names for column headers
@@ -56,6 +56,10 @@ export default function History() {
           case 'fileName':
             aValue = a.fileName.toLowerCase();
             bValue = b.fileName.toLowerCase();
+            break;
+          case 'user':
+            aValue = (a.user?.fullName || '').toLowerCase();
+            bValue = (b.user?.fullName || '').toLowerCase();
             break;
           case 'sector':
             aValue = a.sector.toLowerCase();
@@ -228,6 +232,15 @@ export default function History() {
                     </th>
                     <th
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('user')}
+                    >
+                      <div className="flex items-center gap-1">
+                        User
+                        <SortIndicator field="user" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                       onClick={() => handleSort('sector')}
                     >
                       <div className="flex items-center gap-1">
@@ -285,6 +298,16 @@ export default function History() {
                         <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]" title={entry.fileName}>
                           {entry.fileName}
                         </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {entry.user ? (
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">{entry.user.fullName}</div>
+                            <div className="text-gray-500 text-xs">{entry.user.email}</div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded capitalize">
@@ -467,9 +490,16 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
             </div>
           </div>
 
-          {/* Model Info */}
-          <div className="text-center text-sm text-gray-500">
-            Analyzed using <span className="font-medium">{entry.modelUsed}</span>
+          {/* User & Model Info */}
+          <div className="text-center text-sm text-gray-500 space-y-1">
+            {entry.user && (
+              <div>
+                Analyzed by <span className="font-medium">{entry.user.fullName}</span> ({entry.user.email})
+              </div>
+            )}
+            <div>
+              Using <span className="font-medium">{entry.modelUsed}</span>
+            </div>
           </div>
         </div>
       </div>

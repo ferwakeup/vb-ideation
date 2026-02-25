@@ -10,6 +10,7 @@ import LoadingSpinner from './LoadingSpinner';
 import ProgressTracker from './ProgressTracker';
 import DebugPanel from './DebugPanel';
 import { useHistory } from '../contexts/HistoryContext';
+import { useAuth } from '../contexts/AuthContext';
 import type {
   ProgressEvent,
   PDFScoringResult,
@@ -52,6 +53,7 @@ const SECTOR_OPTIONS = [
 export default function IdeaScorer() {
   // History context
   const { addEntry } = useHistory();
+  const { user } = useAuth();
 
   // Mode toggle: 'url' or 'pdf'
   const [scoringMode, setScoringMode] = useState<'url' | 'pdf'>('pdf');
@@ -135,8 +137,8 @@ export default function IdeaScorer() {
         setPdfResult(result);
         setIsPdfScoring(false);
         setPdfProgress(null);
-        // Save to history
-        addEntry(result);
+        // Save to history with user info
+        addEntry(result, user);
       },
       (error) => {
         setPdfError(error);
@@ -150,7 +152,7 @@ export default function IdeaScorer() {
         setDebugModelInfo(init.model_info);
       }
     );
-  }, [pdfFile, sector, pdfProvider, addEntry]);
+  }, [pdfFile, sector, pdfProvider, addEntry, user]);
 
   // Cancel PDF scoring
   const handleCancelPdfScore = useCallback(() => {

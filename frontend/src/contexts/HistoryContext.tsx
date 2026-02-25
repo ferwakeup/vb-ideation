@@ -3,7 +3,12 @@
  * Manages the history of analyzed documents with localStorage persistence
  */
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { PDFScoringResult, DimensionScore } from '../types/index';
+import type { PDFScoringResult, DimensionScore, User } from '../types/index';
+
+export interface HistoryEntryUser {
+  fullName: string;
+  email: string;
+}
 
 export interface HistoryEntry {
   id: string;
@@ -18,11 +23,12 @@ export interface HistoryEntry {
   ideaSummary: string;
   keyStrengths: string[];
   keyConcerns: string[];
+  user?: HistoryEntryUser;
 }
 
 interface HistoryContextType {
   history: HistoryEntry[];
-  addEntry: (result: PDFScoringResult) => void;
+  addEntry: (result: PDFScoringResult, user?: User | null) => void;
   removeEntry: (id: string) => void;
   clearHistory: () => void;
   getEntry: (id: string) => HistoryEntry | undefined;
@@ -57,7 +63,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     }
   }, [history]);
 
-  const addEntry = useCallback((result: PDFScoringResult) => {
+  const addEntry = useCallback((result: PDFScoringResult, user?: User | null) => {
     const entry: HistoryEntry = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: result.timestamp,
@@ -71,6 +77,10 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       ideaSummary: result.idea_summary,
       keyStrengths: result.key_strengths,
       keyConcerns: result.key_concerns,
+      user: user ? {
+        fullName: user.full_name,
+        email: user.email,
+      } : undefined,
     };
 
     setHistory(prev => [entry, ...prev]);
