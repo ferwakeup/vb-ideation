@@ -199,6 +199,7 @@ export interface AuthState {
 // Extraction types
 export interface ExtractionCreate {
   file_name: string;
+  file_hash: string;
   extracted_text: string;
   model_used: string;
   token_count?: number;
@@ -209,6 +210,7 @@ export interface Extraction {
   id: number;
   user_id: number;
   file_name: string;
+  file_hash: string;
   extracted_text: string;
   model_used: string;
   token_count?: number;
@@ -216,12 +218,18 @@ export interface Extraction {
   created_at: string;
   user_full_name?: string;
   user_email?: string;
+  // Compression stats
+  original_size: number;
+  compressed_size: number;
+  compression_ratio: number;
+  space_saved_percent: number;
 }
 
 export interface ExtractionListItem {
   id: number;
   user_id: number;
   file_name: string;
+  file_hash: string;
   model_used: string;
   token_count?: number;
   sector?: string;
@@ -229,4 +237,32 @@ export interface ExtractionListItem {
   user_full_name?: string;
   user_email?: string;
   text_preview?: string;
+  // Compression stats
+  original_size: number;
+  compressed_size: number;
+  space_saved_percent: number;
+}
+
+export interface ExtractionCheck {
+  file_hash: string;
+  model_used: string;
+}
+
+export interface ExtractionCheckResponse {
+  exists: boolean;
+  extraction_id?: number;
+  file_name?: string;
+  created_at?: string;
+}
+
+export interface ExtractionStats {
+  total_extractions: number;
+  total_original_bytes: number;
+  total_compressed_bytes: number;
+  total_original_mb: number;
+  total_compressed_mb: number;
+  overall_compression_ratio: number;
+  overall_space_saved_percent: number;
+  average_original_kb: number;
+  average_compressed_kb: number;
 }

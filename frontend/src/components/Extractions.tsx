@@ -128,6 +128,9 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tokens
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Size
+              </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -175,6 +178,14 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {extraction.token_count?.toLocaleString() || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {(extraction.compressed_size / 1024).toFixed(1)} KB
+                  </div>
+                  <div className="text-xs text-green-600">
+                    {extraction.space_saved_percent?.toFixed(0)}% saved
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">
                   <div className="flex items-center justify-center gap-2">

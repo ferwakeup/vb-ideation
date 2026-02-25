@@ -82,6 +82,31 @@ def run_migrations():
                     logger.warning(f"Could not add column '{column_name}': {e}")
 
 
+def run_extractions_migration():
+    """
+    Migrate extractions table to new schema with compression support.
+    Since this is a significant schema change (LargeBinary), we drop and recreate if needed.
+    """
+    inspector = inspect(engine)
+
+    if 'extractions' not in inspector.get_table_names():
+        logger.info("Extractions table doesn't exist yet, will be created by Base.metadata.create_all()")
+        return
+
+    existing_columns = {col['name'] for col in inspector.get_columns('extractions')}
+
+    # Check if the table has the old schema (extracted_text column without compression)
+    if 'extracted_text' in existing_columns and 'compressed_text' not in existing_columns:
+        logger.info("Extractions table has old schema - dropping and will recreate with compression support")
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("DROP TABLE extractions"))
+                conn.commit()
+                logger.info("Dropped old extractions table")
+            except Exception as e:
+                logger.warning(f"Could not drop extractions table: {e}")
+
+
 def init_admin_user():
     """
     Initialize the admin user (fernando@moven.pro).

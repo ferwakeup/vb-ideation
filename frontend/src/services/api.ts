@@ -21,7 +21,10 @@ import type {
   ExtractionCreate,
   Extraction,
   ExtractionListItem,
-  ExtractionScoringRequest
+  ExtractionScoringRequest,
+  ExtractionCheck,
+  ExtractionCheckResponse,
+  ExtractionStats
 } from '../types/index';
 
 const API_BASE = import.meta.env.PROD
@@ -322,6 +325,26 @@ export const api = {
   },
 
   // Extraction endpoints
+
+  /**
+   * Check if extraction exists for file hash + model
+   */
+  checkExtraction: async (token: string, check: ExtractionCheck): Promise<ExtractionCheckResponse> => {
+    const response = await axios.post(`${API_BASE}/extractions/check`, check, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Get extraction storage statistics
+   */
+  getExtractionStats: async (token: string): Promise<ExtractionStats> => {
+    const response = await axios.get(`${API_BASE}/extractions/stats`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
 
   /**
    * Create a new extraction
