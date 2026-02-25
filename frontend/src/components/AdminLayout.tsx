@@ -11,6 +11,7 @@ interface NavItem {
   icon: React.ReactNode;
   description: string;
   adminOnly?: boolean;
+  end?: boolean;
 }
 
 const navigation: NavItem[] = [
@@ -23,6 +24,7 @@ const navigation: NavItem[] = [
       </svg>
     ),
     description: 'Analyze business ideas with AI',
+    end: true,
   },
   {
     name: 'History',
@@ -84,6 +86,7 @@ export default function AdminLayout() {
               <li key={item.name}>
                 <NavLink
                   to={item.href}
+                  end={item.end}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
