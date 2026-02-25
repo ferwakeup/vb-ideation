@@ -17,7 +17,11 @@ import type {
   VerifyEmailRequest,
   ResendVerificationRequest,
   User,
-  UserStatusUpdate
+  UserStatusUpdate,
+  ExtractionCreate,
+  Extraction,
+  ExtractionListItem,
+  ExtractionScoringRequest
 } from '../types/index';
 
 const API_BASE = import.meta.env.PROD
@@ -57,6 +61,99 @@ export const api = {
     formData.append('use_checkpoints', String(request.use_checkpoints ?? true));
 
     fetch(`${API_BASE}/score-pdf-stream`, {
+      method: 'POST',
+      body: formData,
+      signal: abortController.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No response body');
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete SSE events
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+          let eventType = '';
+          let eventData = '';
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              eventType = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+              eventData = line.slice(6);
+            } else if (line === '' && eventData) {
+              // Empty line marks end of an event
+              try {
+                const parsed = JSON.parse(eventData);
+
+                if (eventType === 'init') {
+                  onInit?.(parsed as InitEvent);
+                } else if (eventType === 'progress') {
+                  onProgress(parsed as ProgressEvent);
+                } else if (eventType === 'result') {
+                  onResult(parsed as PDFScoringResult);
+                } else if (eventType === 'error') {
+                  onError(parsed.message || 'Unknown error');
+                }
+              } catch (e) {
+                console.error('Failed to parse SSE data:', e);
+              }
+
+              eventType = '';
+              eventData = '';
+            }
+          }
+        }
+      })
+      .catch((error) => {
+        if (error.name !== 'AbortError') {
+          onError(error.message || 'Connection failed');
+        }
+      });
+
+    return {
+      abort: () => abortController.abort()
+    };
+  },
+
+  /**
+   * Score a previously extracted document with progress streaming (SSE)
+   */
+  scoreExtractionWithProgress: (
+    request: ExtractionScoringRequest,
+    onProgress: (event: ProgressEvent) => void,
+    onResult: (result: PDFScoringResult) => void,
+    onError: (error: string) => void,
+    onInit?: (event: InitEvent) => void
+  ): { abort: () => void } => {
+    const abortController = new AbortController();
+
+    const formData = new FormData();
+    formData.append('extraction_id', String(request.extraction_id));
+    formData.append('sector', request.sector);
+    formData.append('num_ideas', String(request.num_ideas ?? 3));
+    formData.append('idea_index', String(request.idea_index ?? 0));
+    formData.append('provider', request.provider ?? 'groq');
+    if (request.model) {
+      formData.append('model', request.model);
+    }
+
+    fetch(`${API_BASE}/score-extraction-stream`, {
       method: 'POST',
       body: formData,
       signal: abortController.signal,
@@ -219,6 +316,48 @@ export const api = {
    */
   deleteUser: async (token: string, userId: number): Promise<{ message: string }> => {
     const response = await axios.delete(`${API_BASE}/admin/users/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  // Extraction endpoints
+
+  /**
+   * Create a new extraction
+   */
+  createExtraction: async (token: string, extraction: ExtractionCreate): Promise<Extraction> => {
+    const response = await axios.post(`${API_BASE}/extractions/`, extraction, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * List all extractions
+   */
+  getExtractions: async (token: string): Promise<ExtractionListItem[]> => {
+    const response = await axios.get(`${API_BASE}/extractions/`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Get a specific extraction with full text
+   */
+  getExtraction: async (token: string, extractionId: number): Promise<Extraction> => {
+    const response = await axios.get(`${API_BASE}/extractions/${extractionId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete an extraction
+   */
+  deleteExtraction: async (token: string, extractionId: number): Promise<{ message: string }> => {
+    const response = await axios.delete(`${API_BASE}/extractions/${extractionId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;

@@ -9,6 +9,7 @@ import ScoreChart from './ScoreChart';
 import LoadingSpinner from './LoadingSpinner';
 import ProgressTracker from './ProgressTracker';
 import DebugPanel from './DebugPanel';
+import Extractions from './Extractions';
 import { useHistory } from '../contexts/HistoryContext';
 import { useAuth } from '../contexts/AuthContext';
 import type {
@@ -16,7 +17,8 @@ import type {
   PDFScoringResult,
   AgentArchitecture,
   StepInfo,
-  ModelInfo
+  ModelInfo,
+  Extraction
 } from '../types/index';
 
 const MODEL_OPTIONS = [
@@ -53,7 +55,7 @@ const SECTOR_OPTIONS = [
 export default function IdeaScorer() {
   // History context
   const { addEntry } = useHistory();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   // Mode toggle: 'url' or 'pdf'
   const [scoringMode, setScoringMode] = useState<'url' | 'pdf'>('pdf');
@@ -72,6 +74,10 @@ export default function IdeaScorer() {
   const [pdfResult, setPdfResult] = useState<PDFScoringResult | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const abortRef = useRef<{ abort: () => void } | null>(null);
+
+  // Extraction selection state
+  const [showExtractionSelector, setShowExtractionSelector] = useState(false);
+  const [selectedExtraction, setSelectedExtraction] = useState<{ id: number; fileName: string } | null>(null);
 
   // Debug panel state
   const [isDebugOpen, setIsDebugOpen] = useState(false);
@@ -94,6 +100,21 @@ export default function IdeaScorer() {
       setPdfError('Please select a valid PDF file');
     }
   }, []);
+
+  // Handle extraction selection
+  const handleSelectExtraction = useCallback(async (extractionId: number) => {
+    if (!token) return;
+    try {
+      const extraction = await api.getExtraction(token, extractionId);
+      setSelectedExtraction({ id: extraction.id, fileName: extraction.file_name });
+      setSector(extraction.sector || 'mobility');
+      setShowExtractionSelector(false);
+      setPdfFile(null); // Clear any selected file
+    } catch (err) {
+      console.error('Failed to load extraction:', err);
+      setPdfError('Failed to load extraction');
+    }
+  }, [token]);
 
   // Handle PDF scoring with progress
   const handlePdfScore = useCallback(() => {
@@ -153,6 +174,64 @@ export default function IdeaScorer() {
       }
     );
   }, [pdfFile, sector, pdfProvider, addEntry, user]);
+
+  // Handle extraction scoring with progress
+  const handleExtractionScore = useCallback(() => {
+    if (!selectedExtraction) {
+      setPdfError('Please select an extraction');
+      return;
+    }
+
+    setIsPdfScoring(true);
+    setPdfProgress(null);
+    setPdfResult(null);
+    setPdfError(null);
+    setCompletedSteps({});
+
+    const provider = PDF_PROVIDER_OPTIONS.find(p => p.value === pdfProvider);
+
+    abortRef.current = api.scoreExtractionWithProgress(
+      {
+        extraction_id: selectedExtraction.id,
+        sector,
+        provider: pdfProvider,
+        model: provider?.model,
+        num_ideas: 3,
+        idea_index: 0,
+      },
+      (progress) => {
+        setPdfProgress(progress);
+        // Track completed steps with timing
+        if (progress.status === 'completed' && progress.timing) {
+          setCompletedSteps(prev => ({
+            ...prev,
+            [progress.step]: {
+              duration: progress.timing?.step_elapsed_seconds || 0,
+              status: progress.status
+            }
+          }));
+        }
+      },
+      (result) => {
+        setPdfResult(result);
+        setIsPdfScoring(false);
+        setPdfProgress(null);
+        // Save to history with user info
+        addEntry(result, user);
+      },
+      (error) => {
+        setPdfError(error);
+        setIsPdfScoring(false);
+        setPdfProgress(null);
+      },
+      (init) => {
+        // Handle init event with architecture data
+        setDebugArchitecture(init.architecture);
+        setDebugSteps(init.steps);
+        setDebugModelInfo(init.model_info);
+      }
+    );
+  }, [selectedExtraction, sector, pdfProvider, addEntry, user]);
 
   // Cancel PDF scoring
   const handleCancelPdfScore = useCallback(() => {
@@ -324,39 +403,127 @@ export default function IdeaScorer() {
           {/* PDF Mode */}
           {scoringMode === 'pdf' && (
             <>
-              {/* File Upload */}
+              {/* Source Selection Toggle */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload PDF Document
+                  Document Source
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    id="pdf-upload"
-                  />
-                  <label htmlFor="pdf-upload" className="cursor-pointer">
-                    {pdfFile ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="text-gray-700 font-medium">{pdfFile.name}</span>
-                      </div>
-                    ) : (
-                      <div>
-                        <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <span className="text-gray-600">Click to upload or drag and drop</span>
-                        <p className="text-xs text-gray-400 mt-1">PDF files only</p>
-                      </div>
-                    )}
-                  </label>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowExtractionSelector(false);
+                      setSelectedExtraction(null);
+                    }}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors border ${
+                      !showExtractionSelector && !selectedExtraction
+                        ? 'bg-blue-50 border-blue-500 text-blue-700'
+                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      Upload New PDF
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setShowExtractionSelector(true)}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors border ${
+                      showExtractionSelector || selectedExtraction
+                        ? 'bg-blue-50 border-blue-500 text-blue-700'
+                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Use Previous Extraction
+                    </div>
+                  </button>
                 </div>
               </div>
+
+              {/* Extraction Selector */}
+              {showExtractionSelector && !selectedExtraction && (
+                <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Select a Previously Extracted Document</h3>
+                  <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-auto">
+                    <Extractions
+                      onSelectExtraction={handleSelectExtraction}
+                      selectionMode={true}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Selected Extraction Display */}
+              {selectedExtraction && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selected Document
+                  </label>
+                  <div className="flex items-center justify-between border-2 border-green-300 bg-green-50 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <span className="text-gray-700 font-medium">{selectedExtraction.fileName}</span>
+                        <p className="text-xs text-green-600">Text already extracted - skipping Step 1</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedExtraction(null);
+                        setShowExtractionSelector(true);
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* File Upload - only show when not using extraction */}
+              {!showExtractionSelector && !selectedExtraction && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload PDF Document
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="pdf-upload"
+                    />
+                    <label htmlFor="pdf-upload" className="cursor-pointer">
+                      {pdfFile ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-gray-700 font-medium">{pdfFile.name}</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          <span className="text-gray-600">Click to upload or drag and drop</span>
+                          <p className="text-xs text-gray-400 mt-1">PDF files only</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                </div>
+              )}
 
               {/* Sector Selection */}
               <div className="mb-6">
@@ -389,11 +556,11 @@ export default function IdeaScorer() {
               </div>
 
               <button
-                onClick={handlePdfScore}
-                disabled={isPdfScoring || !pdfFile}
+                onClick={selectedExtraction ? handleExtractionScore : handlePdfScore}
+                disabled={isPdfScoring || (!pdfFile && !selectedExtraction)}
                 className="w-full bg-blue-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
-                {isPdfScoring ? 'Analyzing...' : 'Score PDF Document'}
+                {isPdfScoring ? 'Analyzing...' : selectedExtraction ? 'Score from Extraction (Skip Step 1)' : 'Score PDF Document'}
               </button>
 
               {pdfError && (
@@ -786,6 +953,8 @@ export default function IdeaScorer() {
                 onClick={() => {
                   setPdfResult(null);
                   setPdfFile(null);
+                  setSelectedExtraction(null);
+                  setShowExtractionSelector(false);
                   setCompletedSteps({});
                 }}
                 className="bg-gray-100 text-gray-700 font-semibold px-6 py-3 rounded-md hover:bg-gray-200 transition-colors"

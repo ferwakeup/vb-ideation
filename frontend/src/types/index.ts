@@ -114,6 +114,15 @@ export interface PDFScoringRequest {
   use_checkpoints?: boolean;
 }
 
+export interface ExtractionScoringRequest {
+  extraction_id: number;
+  sector: string;
+  num_ideas?: number;
+  idea_index?: number;
+  provider?: string;
+  model?: string;
+}
+
 export interface PDFScoringResult {
   idea_summary: string;
   source: string;
@@ -185,4 +194,39 @@ export interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+}
+
+// Extraction types
+export interface ExtractionCreate {
+  file_name: string;
+  extracted_text: string;
+  model_used: string;
+  token_count?: number;
+  sector?: string;
+}
+
+export interface Extraction {
+  id: number;
+  user_id: number;
+  file_name: string;
+  extracted_text: string;
+  model_used: string;
+  token_count?: number;
+  sector?: string;
+  created_at: string;
+  user_full_name?: string;
+  user_email?: string;
+}
+
+export interface ExtractionListItem {
+  id: number;
+  user_id: number;
+  file_name: string;
+  model_used: string;
+  token_count?: number;
+  sector?: string;
+  created_at: string;
+  user_full_name?: string;
+  user_email?: string;
+  text_preview?: string;
 }

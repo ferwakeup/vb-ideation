@@ -239,6 +239,154 @@ class MASScorer:
 
         return result
 
+    def score_text(
+        self,
+        extracted_text: str,
+        source_name: str,
+        sector: str,
+        num_ideas: int = 3,
+        idea_index: int = 0,
+        progress_callback: Optional[Callable[[Dict], None]] = None
+    ) -> Dict:
+        """
+        Score a business idea from pre-extracted text.
+        Skips Agent 1 (extraction) and starts from Agent 2.
+
+        Args:
+            extracted_text: Pre-extracted text content
+            source_name: Name of the source document
+            sector: Business sector for analysis
+            num_ideas: Number of ideas to generate (default: 3)
+            idea_index: Which generated idea to evaluate (default: 0 = first)
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            Complete scoring result dict
+        """
+        # Initialize progress reporter with model info
+        progress = ProgressReporter(
+            callback=progress_callback,
+            provider=self.provider,
+            model=self.llm_factory.model
+        )
+        start_time = datetime.now()
+        logger.info(f"Starting MAS scoring from pre-extracted text (sector: {sector})")
+
+        # No checkpoints for text scoring (already have extraction)
+        checkpoint_manager = None
+
+        # ==== SKIP AGENT 1 - Use pre-extracted text directly ====
+        # Mark extraction as already complete
+        progress.start_extraction()
+        progress.complete_extraction()
+
+        # ==== AGENT 2: Idea Generation ====
+        logger.info("Running Agent 2: Idea Generation")
+        progress.start_idea_generation()
+        agent2 = Agent2Ideas(self.llm_factory, checkpoint_manager)
+        ideas_result = agent2.generate(
+            extracted_text,
+            sector,
+            num_ideas
+        )
+        progress.complete_idea_generation()
+
+        # Parse ideas and select one for evaluation
+        parsed_ideas = Agent2Ideas.parse_ideas(ideas_result["raw_output"])
+        if not parsed_ideas:
+            raise ValueError("No business ideas were generated")
+
+        selected_idea = parsed_ideas[min(idea_index, len(parsed_ideas) - 1)]
+        logger.info(f"Selected idea {idea_index + 1} of {len(parsed_ideas)} for evaluation")
+
+        # ==== AGENT 3: Dimensional Evaluation ====
+        logger.info("Running Agent 3: Dimensional Evaluation (11 dimensions)")
+        agent3 = Agent3Dimensions(self.llm_factory, checkpoint_manager)
+        evaluations = agent3.evaluate_all(
+            selected_idea,
+            extracted_text,
+            sector,
+            progress_callback=lambda dim_idx: (
+                progress.start_dimension(dim_idx) if dim_idx >= 0
+                else progress.complete_dimension(-dim_idx - 1)
+            )
+        )
+
+        # ==== AGENT 4: Synthesis ====
+        logger.info("Running Agent 4: Synthesis Sub-agents")
+        agent4 = Agent4Synthesis(self.llm_factory, checkpoint_manager)
+
+        # Agent 4.1: Generate summary
+        progress.start_synthesis_summary()
+        summary = agent4.generate_summary(selected_idea, evaluations)
+        progress.complete_synthesis_summary()
+
+        # Agent 4.2: Identify strengths
+        progress.start_synthesis_strengths()
+        strengths = agent4.identify_strengths(summary, evaluations)
+        progress.complete_synthesis_strengths()
+
+        # Agent 4.3: Identify concerns
+        progress.start_synthesis_concerns()
+        concerns = agent4.identify_concerns(summary, evaluations)
+        progress.complete_synthesis_concerns()
+
+        synthesis_result = {
+            "summary": summary,
+            "strengths": strengths,
+            "concerns": concerns
+        }
+
+        # ==== AGENT 5: Final Consolidation ====
+        logger.info("Running Agent 5: Final Consolidation")
+        progress.start_consolidation()
+        agent5 = Agent5Consolidation(self.llm_factory, checkpoint_manager)
+        final_report = agent5.consolidate(
+            synthesis_result["summary"],
+            synthesis_result["strengths"],
+            synthesis_result["concerns"],
+            evaluations
+        )
+        progress.complete_consolidation()
+
+        # Calculate elapsed time
+        elapsed = (datetime.now() - start_time).total_seconds()
+
+        # Build final result
+        result = {
+            "idea_summary": final_report["business_idea_summary"],
+            "source": source_name,
+            "sector": sector,
+            "dimension_scores": [
+                {
+                    "dimension": ds["dimension"],
+                    "score": ds["score"] or 0,
+                    "reasoning": ds.get("reasoning", ""),
+                    "confidence": 0.8  # Default confidence
+                }
+                for ds in final_report["dimensional_scores"]
+            ],
+            "overall_score": final_report["overall_score"],
+            "recommendation": self._format_recommendation(final_report["recommendation"]),
+            "recommendation_rationale": final_report.get("recommendation_rationale", ""),
+            "key_strengths": final_report["key_strengths"],
+            "key_concerns": final_report["key_concerns"],
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "model_used": f"{self.provider}/{self.llm_factory.model}",
+            "processing_time_seconds": round(elapsed, 2),
+            "pdf_metadata": None,
+            "generated_ideas_count": len(parsed_ideas),
+            "evaluated_idea_index": idea_index
+        }
+
+        logger.info(
+            f"MAS scoring (from text) complete. Overall score: {final_report['overall_score']}/10, "
+            f"Recommendation: {final_report['recommendation']}, "
+            f"Time: {elapsed:.1f}s"
+        )
+
+        return result
+
     def _format_recommendation(self, recommendation: str) -> str:
         """Format recommendation for display."""
         mapping = {

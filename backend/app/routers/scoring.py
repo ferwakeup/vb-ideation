@@ -4,6 +4,7 @@ Supports both URL-based scoring (backward compatible) and PDF-based multi-agent 
 """
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 from typing import List, Optional, AsyncGenerator
 import json
 import os
@@ -22,10 +23,12 @@ from app.models.score import (
     CheckpointStatus,
     DimensionScore
 )
+from app.models.extraction import Extraction
 from app.services.scorer import IdeaScorer
 from app.services.mas_scorer import MASScorer
 from app.config import get_settings, Settings
 from app.services.agents.progress import get_architecture, get_all_steps_info
+from app.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -377,6 +380,146 @@ async def score_pdf_stream(
             status_code=500,
             detail=f"Failed to start PDF scoring: {str(e)}"
         )
+
+
+@router.post("/score-extraction-stream")
+async def score_extraction_stream(
+    extraction_id: int = Form(..., description="ID of the extraction to score"),
+    sector: str = Form(..., description="Business sector (e.g., 'mobility', 'healthcare')"),
+    num_ideas: int = Form(default=3, description="Number of ideas to generate"),
+    idea_index: int = Form(default=0, description="Which idea to evaluate (0-indexed)"),
+    provider: str = Form(default="groq", description="LLM provider"),
+    model: Optional[str] = Form(default=None, description="Model name"),
+    settings: Settings = Depends(get_settings),
+    db: Session = Depends(get_db)
+):
+    """
+    Score a business idea from a previously extracted document with real-time progress streaming (SSE).
+
+    This endpoint skips Agent 1 (extraction) and starts from Agent 2 (idea generation):
+    - 16 total steps across 4 agents (skipping extraction)
+    - Progress events sent as Server-Sent Events (SSE)
+    - Final result sent when complete
+
+    Returns:
+        StreamingResponse with SSE events
+    """
+    # Fetch the extraction from database
+    extraction = db.query(Extraction).filter(Extraction.id == extraction_id).first()
+    if not extraction:
+        raise HTTPException(
+            status_code=404,
+            detail="Extraction not found"
+        )
+
+    logger.info(f"Scoring from extraction ID {extraction_id}: {extraction.file_name} (sector: {sector}, provider: {provider})")
+
+    # Create MAS scorer
+    mas_scorer = get_mas_scorer(provider, model, False, settings)  # No checkpoints for text scoring
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        """Generate SSE events for progress and final result."""
+        progress_queue: Queue = Queue()
+        result_holder = {"result": None, "error": None}
+
+        # Send architecture info first for debug panel
+        arch_event = {
+            "architecture": get_architecture(),
+            "steps": get_all_steps_info(),
+            "model_info": {
+                "provider": provider,
+                "model": model or "default",
+                "deployment": "local" if provider.lower() == "ollama" else "cloud"
+            }
+        }
+        yield f"event: init\ndata: {json.dumps(arch_event)}\n\n"
+
+        def progress_callback(event: dict):
+            """Callback to push progress events to the queue."""
+            progress_queue.put(("progress", event))
+
+        def run_scoring():
+            """Run scoring in a separate thread."""
+            try:
+                result = mas_scorer.score_text(
+                    extracted_text=extraction.extracted_text,
+                    source_name=extraction.file_name,
+                    sector=sector,
+                    num_ideas=num_ideas,
+                    idea_index=idea_index,
+                    progress_callback=progress_callback
+                )
+                result_holder["result"] = result
+            except Exception as e:
+                logger.error(f"Scoring error: {e}")
+                result_holder["error"] = str(e)
+            finally:
+                progress_queue.put(("done", None))
+
+        # Start scoring in background thread
+        scoring_thread = Thread(target=run_scoring)
+        scoring_thread.start()
+
+        try:
+            # Yield progress events as they arrive
+            while True:
+                try:
+                    # Check queue with a small timeout to allow async
+                    await asyncio.sleep(0.1)
+
+                    while not progress_queue.empty():
+                        event_type, event_data = progress_queue.get_nowait()
+
+                        if event_type == "progress":
+                            yield f"event: progress\ndata: {json.dumps(event_data)}\n\n"
+                        elif event_type == "done":
+                            # Scoring complete
+                            if result_holder["error"]:
+                                error_event = {
+                                    "type": "error",
+                                    "message": result_holder["error"]
+                                }
+                                yield f"event: error\ndata: {json.dumps(error_event)}\n\n"
+                            elif result_holder["result"]:
+                                # Build final result
+                                result = result_holder["result"]
+                                final_result = {
+                                    "idea_summary": result["idea_summary"],
+                                    "source": extraction.file_name,
+                                    "sector": result["sector"],
+                                    "dimension_scores": result["dimension_scores"],
+                                    "overall_score": result["overall_score"],
+                                    "recommendation": result["recommendation"],
+                                    "recommendation_rationale": result.get("recommendation_rationale", ""),
+                                    "key_strengths": result["key_strengths"],
+                                    "key_concerns": result["key_concerns"],
+                                    "timestamp": result["timestamp"],
+                                    "model_used": result["model_used"],
+                                    "processing_time_seconds": result.get("processing_time_seconds", 0),
+                                    "pdf_metadata": result.get("pdf_metadata"),
+                                    "generated_ideas_count": result.get("generated_ideas_count", 0),
+                                    "evaluated_idea_index": result.get("evaluated_idea_index", 0)
+                                }
+                                yield f"event: result\ndata: {json.dumps(final_result)}\n\n"
+                            return
+
+                except Exception as e:
+                    logger.error(f"SSE generator error: {e}")
+                    error_event = {"type": "error", "message": str(e)}
+                    yield f"event: error\ndata: {json.dumps(error_event)}\n\n"
+                    return
+        finally:
+            logger.info(f"Extraction scoring complete for ID {extraction_id}")
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 
 @router.get("/providers")
