@@ -1,6 +1,6 @@
 /**
  * Register Page Component
- * User registration form with @moven.pro validation and email verification
+ * User registration form with email verification
  */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -24,8 +24,8 @@ export default function RegisterPage() {
       return false;
     }
 
-    if (!email.endsWith('@moven.pro')) {
-      setError('Only @moven.pro email addresses are allowed');
+    if (!email.trim()) {
+      setError('Email is required');
       return false;
     }
 
@@ -179,11 +179,8 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@moven.pro"
+                placeholder="you@example.com"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Only @moven.pro email addresses are allowed
-              </p>
             </div>
 
             <div>

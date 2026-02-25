@@ -127,7 +127,7 @@ export default function LandingPage() {
             Create Your Account
           </Link>
           <p className="text-sm text-gray-500 mt-4">
-            Available exclusively for @moven.pro team members
+            Start scoring your venture ideas today
           </p>
         </div>
       </div>

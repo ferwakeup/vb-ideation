@@ -14,10 +14,8 @@ class UserCreate(BaseModel):
 
     @field_validator('email')
     @classmethod
-    def validate_moven_email(cls, v: str) -> str:
-        """Validate that email belongs to @moven.pro domain."""
-        if not v.endswith('@moven.pro'):
-            raise ValueError('Only @moven.pro email addresses are allowed')
+    def normalize_email(cls, v: str) -> str:
+        """Normalize email to lowercase."""
         return v.lower()
 
 
