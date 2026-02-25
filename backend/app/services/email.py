@@ -5,7 +5,7 @@ import smtplib
 import secrets
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import logging
 import httpx
@@ -22,7 +22,7 @@ def generate_verification_token() -> str:
 
 def get_token_expiry() -> datetime:
     """Get expiry time for verification token (24 hours from now)."""
-    return datetime.utcnow() + timedelta(hours=24)
+    return datetime.now(timezone.utc) + timedelta(hours=24)
 
 
 async def send_verification_email(

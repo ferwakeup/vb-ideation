@@ -3,7 +3,7 @@ Authentication API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.database import get_db
 from app.schemas.auth import (
@@ -98,7 +98,7 @@ async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db
         )
 
     # Check if token has expired
-    if user.verification_token_expires and user.verification_token_expires < datetime.utcnow():
+    if user.verification_token_expires and user.verification_token_expires < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Verification token has expired. Please request a new one."
