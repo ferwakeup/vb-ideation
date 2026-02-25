@@ -14,12 +14,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNeedsVerification(false);
     setIsLoading(true);
 
     try {
@@ -30,8 +32,16 @@ export default function LoginPage() {
       }, 1000);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { detail?: string } } };
-        setError(axiosError.response?.data?.detail || 'Invalid email or password');
+        const axiosError = err as { response?: { status?: number; data?: { detail?: string } } };
+        const status = axiosError.response?.status;
+        const detail = axiosError.response?.data?.detail;
+
+        // Check if it's a verification error (403)
+        if (status === 403 && detail?.includes('verify')) {
+          setNeedsVerification(true);
+        } else {
+          setError(detail || 'Invalid email or password');
+        }
       } else {
         setError('An error occurred. Please try again.');
       }
@@ -60,7 +70,29 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
           <p className="text-gray-400 mb-6">Sign in to your account to continue</p>
 
-          {error && (
+          {needsVerification && (
+            <div className="bg-yellow-900/50 border border-yellow-700 text-yellow-200 px-4 py-3 rounded-lg mb-6 animate-in fade-in duration-200">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="font-medium">Email verification required</p>
+                  <p className="text-sm mt-1 text-yellow-300/80">
+                    Please check your inbox and click the verification link before logging in.
+                  </p>
+                  <Link
+                    to={`/resend-verification?email=${encodeURIComponent(email)}`}
+                    className="inline-block mt-2 text-sm text-yellow-400 hover:text-yellow-300 underline"
+                  >
+                    Resend verification email
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {error && !needsVerification && (
             <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6 animate-in fade-in duration-200">
               {error}
             </div>
