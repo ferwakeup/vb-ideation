@@ -17,8 +17,7 @@ import type {
   PDFScoringResult,
   AgentArchitecture,
   StepInfo,
-  ModelInfo,
-  Extraction
+  ModelInfo
 } from '../types/index';
 
 const MODEL_OPTIONS = [
