@@ -2,6 +2,7 @@
  * Admin Layout Component
  * Provides the main layout structure with sidebar navigation
  */
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -52,33 +53,115 @@ const navigation: NavItem[] = [
 export default function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change or window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  // Toggle button component
+  const CollapseButton = ({ className = '' }: { className?: string }) => (
+    <button
+      onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+      className={`p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors ${className}`}
+      title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+    >
+      <svg
+        className={`w-5 h-5 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+      </svg>
+    </button>
+  );
+
   return (
     <div className="min-h-screen flex bg-gray-100">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Header */}
+      <div className="fixed top-0 left-0 right-0 h-14 bg-gray-900 flex items-center justify-between px-4 lg:hidden z-30">
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="p-2 text-gray-400 hover:text-white"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <span className="font-bold text-white">VB Ideation</span>
+        </div>
+        <div className="w-10" /> {/* Spacer for centering */}
+      </div>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white flex flex-col">
+      <aside
+        className={`
+          fixed lg:static inset-y-0 left-0 z-50
+          bg-gray-900 text-white flex flex-col
+          transform transition-all duration-300 ease-in-out
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}
+          w-64
+        `}
+      >
         {/* Logo/Header */}
-        <div className="p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        <div className={`p-4 border-b border-gray-800 ${sidebarCollapsed ? 'lg:px-2' : 'p-6'}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 ${sidebarCollapsed ? 'w-10 h-10 lg:w-12 lg:h-12' : 'w-10 h-10'}`}>
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              {!sidebarCollapsed && (
+                <div className="lg:block">
+                  <h1 className="font-bold text-lg">VB Ideation</h1>
+                  <p className="text-xs text-gray-400">Admin Panel</p>
+                </div>
+              )}
+            </div>
+            {/* Close button for mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 text-gray-400 hover:text-white lg:hidden"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </div>
-            <div>
-              <h1 className="font-bold text-lg">VB Ideation</h1>
-              <p className="text-xs text-gray-400">Admin Panel</p>
-            </div>
+            </button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4">
+        <nav className={`flex-1 p-4 ${sidebarCollapsed ? 'lg:p-2' : ''}`}>
           <ul className="space-y-2">
             {navigation
               .filter((item) => !item.adminOnly || user?.is_admin)
@@ -87,30 +170,67 @@ export default function AdminLayout() {
                 <NavLink
                   to={item.href}
                   end={item.end}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''
+                    } ${
                       isActive
                         ? 'bg-blue-600 text-white'
                         : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }`
                   }
+                  title={sidebarCollapsed ? item.name : undefined}
                 >
-                  {item.icon}
-                  <div>
-                    <span className="font-medium">{item.name}</span>
-                    <p className="text-xs opacity-70">{item.description}</p>
-                  </div>
+                  <div className="flex-shrink-0">{item.icon}</div>
+                  {!sidebarCollapsed && (
+                    <div className="lg:block">
+                      <span className="font-medium">{item.name}</span>
+                      <p className="text-xs opacity-70">{item.description}</p>
+                    </div>
+                  )}
+                  {sidebarCollapsed && (
+                    <div className="lg:hidden">
+                      <span className="font-medium">{item.name}</span>
+                      <p className="text-xs opacity-70">{item.description}</p>
+                    </div>
+                  )}
                 </NavLink>
               </li>
             ))}
           </ul>
         </nav>
 
+        {/* Collapse Toggle - Desktop Only */}
+        <div className="hidden lg:block p-2 border-t border-gray-800">
+          <CollapseButton className="w-full flex justify-center" />
+        </div>
+
         {/* Footer */}
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex items-center justify-between px-4 py-2">
+        <div className={`p-4 border-t border-gray-800 ${sidebarCollapsed ? 'lg:p-2' : ''}`}>
+          {sidebarCollapsed ? (
+            // Collapsed view - icon only
+            <div className="hidden lg:flex flex-col items-center gap-2">
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-white">
+                  {user?.full_name?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          ) : null}
+          {/* Full view (shown on mobile always, on desktop when not collapsed) */}
+          <div className={`flex items-center justify-between px-4 py-2 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-medium text-white">
                   {user?.full_name?.charAt(0).toUpperCase() || 'U'}
                 </span>
@@ -126,7 +246,7 @@ export default function AdminLayout() {
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
               title="Logout"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +258,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pt-14 lg:pt-0">
         <Outlet />
       </main>
     </div>

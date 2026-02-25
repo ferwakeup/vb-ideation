@@ -56,8 +56,8 @@ export default function IdeaScorer() {
   const { addEntry } = useHistory();
   const { user, token } = useAuth();
 
-  // Mode toggle: 'url' or 'pdf'
-  const [scoringMode, setScoringMode] = useState<'url' | 'pdf'>('pdf');
+  // Mode toggle: 'url' or 'pdf' - URL mode hidden but code preserved
+  const [scoringMode] = useState<'url' | 'pdf'>('pdf');
 
   // URL mode state
   const [useConfig, setUseConfig] = useState(true);
@@ -283,172 +283,85 @@ export default function IdeaScorer() {
     }
   };
 
+  // Info tooltip component
+  const InfoTooltip = ({ text }: { text: string }) => (
+    <div className="group relative inline-block ml-1">
+      <svg className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+      <div className="invisible group-hover:visible absolute z-50 w-64 p-2 mt-1 text-xs text-white bg-gray-800 rounded-lg shadow-lg -left-28 top-5">
+        {text}
+        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-full bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-gray-50 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">
             Venture Builder Idea Scorer
           </h1>
-          <p className="text-gray-600">
-            AI-powered analysis of business ideas across 11 critical dimensions
+          <p className="text-sm sm:text-base text-gray-600">
+            AI-powered analysis across 11 critical dimensions
           </p>
         </div>
 
-        {/* Legend / Scoring Guide */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            Decision Matrix Legend
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Overall Recommendation Categories */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Overall Recommendation</h3>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded mr-3"></div>
-                  <span className="text-sm text-gray-700">
-                    <span className="font-semibold">Strong Pursue:</span> Overall ≥7.5/10
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-yellow-500 rounded mr-3"></div>
-                  <span className="text-sm text-gray-700">
-                    <span className="font-semibold">Consider:</span> Overall ≥6.0/10
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-blue-500 rounded mr-3"></div>
-                  <span className="text-sm text-gray-700">
-                    <span className="font-semibold">Further Research:</span> Overall ≥4.5/10
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-red-500 rounded mr-3"></div>
-                  <span className="text-sm text-gray-700">
-                    <span className="font-semibold">Pass:</span> Overall &lt;4.5/10
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Individual Dimension Score Ranges */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Dimension Score Ranges</h3>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <span className="w-12 text-sm font-semibold text-green-700">9-10</span>
-                  <span className="text-sm text-gray-700">Excellent - No significant concerns</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="w-12 text-sm font-semibold text-blue-700">7-8</span>
-                  <span className="text-sm text-gray-700">Good - Minor concerns</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="w-12 text-sm font-semibold text-yellow-700">4-6</span>
-                  <span className="text-sm text-gray-700">Average - Some concerns</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="w-12 text-sm font-semibold text-red-700">0-3</span>
-                  <span className="text-sm text-gray-700">Poor - Major concerns</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Critical Dimensions Note */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-600">
-              <span className="font-semibold">Note:</span> Critical dimensions (Rapid Prototype Validation, Scalability, and Sustainable Competitive Advantage) have higher weights in the overall score calculation.
-            </p>
-          </div>
-        </div>
-
         {/* Input Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Input Configuration
-          </h2>
-
-          {/* Mode Toggle */}
-          <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setScoringMode('pdf')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                scoringMode === 'pdf'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              PDF Upload (Multi-Agent)
-            </button>
-            <button
-              onClick={() => setScoringMode('url')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                scoringMode === 'url'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              URL Analysis
-            </button>
-          </div>
-
-          {/* PDF Mode */}
-          {scoringMode === 'pdf' && (
-            <>
-              {/* Source Selection Toggle */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Document Source
-                </label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowExtractionSelector(false);
-                      setSelectedExtraction(null);
-                    }}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors border ${
-                      !showExtractionSelector && !selectedExtraction
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      Upload New PDF
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setShowExtractionSelector(true)}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors border ${
-                      showExtractionSelector || selectedExtraction
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Use Previous Extraction
-                    </div>
-                  </button>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-8">
+          {/* PDF Mode - Always active, URL mode hidden but code preserved */}
+          {/* Source Selection Toggle */}
+          <div className="mb-4 sm:mb-6">
+            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+              Document Source
+              <InfoTooltip text="Choose to upload a new PDF document or select from previously extracted documents to save processing time." />
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={() => {
+                  setShowExtractionSelector(false);
+                  setSelectedExtraction(null);
+                }}
+                className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-sm font-medium transition-colors border ${
+                  !showExtractionSelector && !selectedExtraction
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="hidden xs:inline">Upload New PDF</span>
+                  <span className="xs:hidden">New PDF</span>
                 </div>
-              </div>
+              </button>
+              <button
+                onClick={() => setShowExtractionSelector(true)}
+                className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-sm font-medium transition-colors border ${
+                  showExtractionSelector || selectedExtraction
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="hidden xs:inline">Use Previous Extraction</span>
+                  <span className="xs:hidden">Previous</span>
+                </div>
+              </button>
+            </div>
+          </div>
 
               {/* Extraction Selector */}
               {showExtractionSelector && !selectedExtraction && (
-                <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Select a Previously Extracted Document</h3>
-                  <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-auto">
+                <div className="mb-4 sm:mb-6 border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2 sm:mb-3">Select a Previously Extracted Document</h3>
+                  <div className="bg-white rounded-lg border border-gray-200 max-h-48 sm:max-h-64 overflow-auto">
                     <Extractions
                       onSelectExtraction={handleSelectExtraction}
                       selectionMode={true}
@@ -459,18 +372,18 @@ export default function IdeaScorer() {
 
               {/* Selected Extraction Display */}
               {selectedExtraction && (
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Selected Document
                   </label>
-                  <div className="flex items-center justify-between border-2 border-green-300 bg-green-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center justify-between border-2 border-green-300 bg-green-50 rounded-lg p-3 sm:p-4">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <div>
-                        <span className="text-gray-700 font-medium">{selectedExtraction.fileName}</span>
-                        <p className="text-xs text-green-600">Text already extracted - skipping Step 1</p>
+                      <div className="min-w-0">
+                        <span className="text-gray-700 font-medium text-sm sm:text-base truncate block">{selectedExtraction.fileName}</span>
+                        <p className="text-xs text-green-600">Skipping extraction step</p>
                       </div>
                     </div>
                     <button
@@ -478,7 +391,7 @@ export default function IdeaScorer() {
                         setSelectedExtraction(null);
                         setShowExtractionSelector(true);
                       }}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-gray-500 hover:text-gray-700 p-1 flex-shrink-0"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -490,11 +403,12 @@ export default function IdeaScorer() {
 
               {/* File Upload - only show when not using extraction */}
               {!showExtractionSelector && !selectedExtraction && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="mb-4 sm:mb-6">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     Upload PDF Document
+                    <InfoTooltip text="Upload a PDF document containing business idea information. The AI will extract text and analyze it." />
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
                     <input
                       type="file"
                       accept=".pdf"
@@ -505,17 +419,17 @@ export default function IdeaScorer() {
                     <label htmlFor="pdf-upload" className="cursor-pointer">
                       {pdfFile ? (
                         <div className="flex items-center justify-center gap-2">
-                          <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span className="text-gray-700 font-medium">{pdfFile.name}</span>
+                          <span className="text-gray-700 font-medium text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">{pdfFile.name}</span>
                         </div>
                       ) : (
                         <div>
-                          <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
-                          <span className="text-gray-600">Click to upload or drag and drop</span>
+                          <span className="text-gray-600 text-sm sm:text-base">Tap to upload PDF</span>
                           <p className="text-xs text-gray-400 mt-1">PDF files only</p>
                         </div>
                       )}
@@ -525,14 +439,15 @@ export default function IdeaScorer() {
               )}
 
               {/* Sector Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-4 sm:mb-6">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   Business Sector
+                  <InfoTooltip text="Select the industry sector that best matches the business idea. This helps the AI provide more relevant analysis." />
                 </label>
                 <select
                   value={sector}
                   onChange={(e) => setSector(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-md px-3 sm:px-4 py-2.5 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {SECTOR_OPTIONS.map((s) => (
                     <option key={s} value={s}>
@@ -543,12 +458,12 @@ export default function IdeaScorer() {
               </div>
 
               {/* AI Provider Info */}
-              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="mb-4 sm:mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-sm font-medium text-blue-800">
+                  <span className="text-xs sm:text-sm font-medium text-blue-800">
                     Powered by Groq (Llama 3.3 70B) - Fast & Free
                   </span>
                 </div>
@@ -557,22 +472,20 @@ export default function IdeaScorer() {
               <button
                 onClick={selectedExtraction ? handleExtractionScore : handlePdfScore}
                 disabled={isPdfScoring || (!pdfFile && !selectedExtraction)}
-                className="w-full bg-blue-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="w-full bg-blue-600 text-white font-semibold px-4 sm:px-6 py-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
-                {isPdfScoring ? 'Analyzing...' : selectedExtraction ? 'Score from Extraction (Skip Step 1)' : 'Score PDF Document'}
+                {isPdfScoring ? 'Analyzing...' : selectedExtraction ? 'Analyze (Skip Extraction)' : 'Analyze PDF'}
               </button>
 
               {pdfError && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-red-800">
+                <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-800 text-sm">
                     Error: {pdfError}
                   </p>
                 </div>
               )}
-            </>
-          )}
 
-          {/* URL Mode */}
+          {/* URL Mode - Hidden but code preserved for future use */}
           {scoringMode === 'url' && (
             <>
               {/* Model Selection */}
