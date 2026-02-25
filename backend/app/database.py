@@ -62,6 +62,7 @@ def run_migrations():
         'is_verified': ('BOOLEAN', 'FALSE'),
         'verification_token': ('VARCHAR(255)', 'NULL'),
         'verification_token_expires': ('TIMESTAMP WITH TIME ZONE', 'NULL'),
+        'is_admin': ('BOOLEAN', 'FALSE'),
     }
 
     with engine.connect() as conn:
@@ -79,3 +80,24 @@ def run_migrations():
                     logger.info(f"Added column '{column_name}' to users table")
                 except Exception as e:
                     logger.warning(f"Could not add column '{column_name}': {e}")
+
+
+def init_admin_user():
+    """
+    Initialize the admin user (fernando@moven.pro).
+    This runs on startup to ensure the admin account has admin privileges.
+    """
+    ADMIN_EMAIL = "fernando@moven.pro"
+
+    with engine.connect() as conn:
+        try:
+            # Update the admin user if exists
+            result = conn.execute(
+                text("UPDATE users SET is_admin = TRUE WHERE email = :email"),
+                {"email": ADMIN_EMAIL}
+            )
+            conn.commit()
+            if result.rowcount > 0:
+                logger.info(f"Set admin privileges for {ADMIN_EMAIL}")
+        except Exception as e:
+            logger.warning(f"Could not set admin user: {e}")

@@ -139,8 +139,14 @@ export interface User {
   full_name: string;
   is_active: boolean;
   is_verified: boolean;
+  is_admin: boolean;
   created_at: string;
   updated_at?: string;
+}
+
+export interface UserStatusUpdate {
+  is_active?: boolean;
+  is_verified?: boolean;
 }
 
 export interface LoginRequest {

@@ -14,6 +14,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ResendVerificationPage from './pages/ResendVerificationPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -50,6 +51,7 @@ function App() {
               >
                 <Route index element={<IdeaScorer />} />
                 <Route path="history" element={<History />} />
+                <Route path="users" element={<AdminUsersPage />} />
               </Route>
             </Routes>
           </BrowserRouter>

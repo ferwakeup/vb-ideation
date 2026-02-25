@@ -4,9 +4,9 @@ Multi-Agent System for Business Idea Evaluation.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import scoring, auth
+from app.routers import scoring, auth, admin
 from app.config import get_settings
-from app.database import engine, Base, run_migrations
+from app.database import engine, Base, run_migrations, init_admin_user
 import logging
 
 # Configure logging
@@ -61,6 +61,7 @@ app.add_middleware(
 # Include routers
 app.include_router(scoring.router, prefix="/api/v1", tags=["scoring"])
 app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
+app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 
 
 @app.get("/")
@@ -92,6 +93,10 @@ async def startup_event():
     # Create database tables (for new installations)
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created/verified")
+
+    # Initialize admin user
+    init_admin_user()
+    logger.info("Admin user initialized")
 
     logger.info("=" * 60)
     logger.info("Starting VB Idea Scorer API v2.0.0 (Multi-Agent System)")

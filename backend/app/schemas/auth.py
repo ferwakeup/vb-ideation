@@ -32,11 +32,18 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_verified: bool
+    is_admin: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class UserStatusUpdate(BaseModel):
+    """Schema for updating user status."""
+    is_active: Optional[bool] = None
+    is_verified: Optional[bool] = None
 
 
 class RegisterResponse(BaseModel):

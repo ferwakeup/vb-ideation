@@ -16,7 +16,8 @@ import type {
   AuthResponse,
   VerifyEmailRequest,
   ResendVerificationRequest,
-  User
+  User,
+  UserStatusUpdate
 } from '../types/index';
 
 const API_BASE = import.meta.env.PROD
@@ -186,6 +187,38 @@ export const api = {
    */
   getMe: async (token: string): Promise<User> => {
     const response = await axios.get(`${API_BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  // Admin endpoints
+
+  /**
+   * Get all users (admin only)
+   */
+  getUsers: async (token: string): Promise<User[]> => {
+    const response = await axios.get(`${API_BASE}/admin/users`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Update user status (admin only)
+   */
+  updateUserStatus: async (token: string, userId: number, status: UserStatusUpdate): Promise<User> => {
+    const response = await axios.patch(`${API_BASE}/admin/users/${userId}/status`, status, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete user (admin only)
+   */
+  deleteUser: async (token: string, userId: number): Promise<{ message: string }> => {
+    const response = await axios.delete(`${API_BASE}/admin/users/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;

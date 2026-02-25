@@ -5,7 +5,15 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ReactNode;
+  description: string;
+  adminOnly?: boolean;
+}
+
+const navigation: NavItem[] = [
   {
     name: 'Venture Scorer',
     href: '/app',
@@ -25,6 +33,17 @@ const navigation = [
       </svg>
     ),
     description: 'View past analyses',
+  },
+  {
+    name: 'Users',
+    href: '/app/users',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+    description: 'Manage users',
+    adminOnly: true,
   },
 ];
 
@@ -59,7 +78,9 @@ export default function AdminLayout() {
         {/* Navigation */}
         <nav className="flex-1 p-4">
           <ul className="space-y-2">
-            {navigation.map((item) => (
+            {navigation
+              .filter((item) => !item.adminOnly || user?.is_admin)
+              .map((item) => (
               <li key={item.name}>
                 <NavLink
                   to={item.href}
