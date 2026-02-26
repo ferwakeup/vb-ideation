@@ -4,6 +4,7 @@
  * using a circular SVG progress indicator
  */
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ProgressEvent } from '../types/index';
 
 interface ProgressTrackerProps {
@@ -11,6 +12,7 @@ interface ProgressTrackerProps {
 }
 
 export default function ProgressTracker({ progress }: ProgressTrackerProps) {
+  const { t } = useTranslation('scorer');
   const [displayProgress, setDisplayProgress] = useState<ProgressEvent | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
 
@@ -105,7 +107,7 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
           </div>
           {/* Agent name */}
           <div className="text-sm text-gray-500 font-medium mt-1">
-            {displayProgress?.agent || 'Starting...'}
+            {displayProgress?.agent || t('progress.starting')}
           </div>
         </div>
       </div>
@@ -113,16 +115,16 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
       {/* Step title */}
       <div className="mt-6 text-center">
         <h3 className="text-lg font-semibold text-gray-800">
-          {displayProgress?.title || 'Initializing'}
+          {displayProgress?.title || t('progress.initializing')}
         </h3>
         <p className="text-sm text-gray-500 mt-1 max-w-xs">
-          {displayProgress?.description || 'Preparing to analyze your document...'}
+          {displayProgress?.description || t('progress.preparing')}
         </p>
       </div>
 
       {/* Step counter */}
       <div className="mt-4 text-sm text-gray-400">
-        Step {currentStep} of {totalSteps}
+        {t('progress.stepOf', { current: currentStep, total: totalSteps })}
       </div>
 
       {/* Progress bar (alternative linear view) */}
@@ -180,11 +182,11 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
 
       {/* Agent labels */}
       <div className="flex items-center justify-center gap-1 mt-2 text-xs text-gray-400">
-        <span className="w-8 text-center">Extract</span>
-        <span className="w-8 text-center">Ideas</span>
-        <span className="w-8 text-center">Eval</span>
-        <span className="w-8 text-center">Synth</span>
-        <span className="w-8 text-center">Final</span>
+        <span className="w-8 text-center">{t('progress.agents.extract')}</span>
+        <span className="w-8 text-center">{t('progress.agents.ideas')}</span>
+        <span className="w-8 text-center">{t('progress.agents.eval')}</span>
+        <span className="w-8 text-center">{t('progress.agents.synth')}</span>
+        <span className="w-8 text-center">{t('progress.agents.final')}</span>
       </div>
     </div>
   );

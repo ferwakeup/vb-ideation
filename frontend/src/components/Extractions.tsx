@@ -3,6 +3,7 @@
  * Displays a table of previously extracted documents
  */
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import type { ExtractionListItem } from '../types/index';
@@ -14,6 +15,8 @@ interface ExtractionsProps {
 }
 
 export default function Extractions({ onSelectExtraction, selectionMode = false }: ExtractionsProps) {
+  const { t } = useTranslation('scorer');
+  const { t: tCommon } = useTranslation('common');
   const { token } = useAuth();
   const [extractions, setExtractions] = useState<ExtractionListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +36,7 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
       const data = await api.getExtractions(token);
       setExtractions(data);
     } catch (err) {
-      setError('Failed to load extractions');
+      setError(t('extractions.loadError'));
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -42,14 +45,14 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
 
   const handleDelete = async (id: number) => {
     if (!token) return;
-    if (!confirm('Are you sure you want to delete this extraction?')) return;
+    if (!confirm(t('extractions.confirmDelete'))) return;
 
     try {
       setDeleteLoading(id);
       await api.deleteExtraction(token, id);
       setExtractions(extractions.filter(e => e.id !== id));
     } catch (err) {
-      setError('Failed to delete extraction');
+      setError(t('extractions.deleteError'));
       console.error(err);
     } finally {
       setDeleteLoading(null);
@@ -71,7 +74,7 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
     return (
       <div className="bg-white rounded-lg shadow-md p-12 text-center">
         <Spinner size="lg" />
-        <p className="text-gray-500 mt-4">Loading extractions...</p>
+        <p className="text-gray-500 mt-4">{t('extractions.loading')}</p>
       </div>
     );
   }
@@ -84,7 +87,7 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
           onClick={loadExtractions}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
         >
-          Retry
+          {tCommon('actions.retry')}
         </button>
       </div>
     );
@@ -96,9 +99,9 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
         <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No extractions yet</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">{t('extractions.noExtractions')}</h3>
         <p className="text-gray-500">
-          When you analyze a PDF, the extracted text will be saved here for reuse.
+          {t('extractions.noExtractionsHint')}
         </p>
       </div>
     );
@@ -111,28 +114,28 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
+                {t('extractions.columns.date')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Document
+                {t('extractions.columns.document')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                User
+                {t('extractions.columns.user')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Model
+                {t('extractions.columns.model')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Sector
+                {t('extractions.columns.sector')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tokens
+                {t('extractions.columns.tokens')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Size
+                {t('extractions.columns.size')}
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                {t('extractions.columns.actions')}
               </th>
             </tr>
           </thead>
@@ -184,7 +187,7 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
                     {(extraction.compressed_size / 1024).toFixed(1)} KB
                   </div>
                   <div className="text-xs text-green-600">
-                    {extraction.space_saved_percent?.toFixed(0)}% saved
+                    {t('extractions.spaceSaved', { percent: extraction.space_saved_percent?.toFixed(0) })}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -194,7 +197,7 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
                         onClick={() => onSelectExtraction(extraction.id)}
                         className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors"
                       >
-                        Use
+                        {tCommon('actions.use')}
                       </button>
                     )}
                     {deleteLoading === extraction.id ? (
@@ -203,7 +206,7 @@ export default function Extractions({ onSelectExtraction, selectionMode = false 
                       <button
                         onClick={() => handleDelete(extraction.id)}
                         className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Delete"
+                        title={tCommon('actions.delete')}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
