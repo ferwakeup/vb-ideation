@@ -76,6 +76,7 @@
     "initializing": "Initializing",
     "preparing": "Preparing to analyze your document...",
     "stepOf": "Step {{current}} of {{total}}",
+    "extractionSkipped": "Using previously saved extraction - skipping Step 1",
     "agents": {
       "extract": "Extract",
       "ideas": "Ideas",

@@ -477,6 +477,18 @@ async def score_extraction_stream(
         }
         yield f"event: init\ndata: {json.dumps(arch_event)}\n\n"
 
+        # Send message that Step 1 (extraction) was skipped
+        skipped_event = {
+            "step": 1,
+            "total_steps": 17,
+            "agent": "Agent 1",
+            "title": "Content Extraction",
+            "description": f"Skipped - using saved extraction from {extraction.file_name}",
+            "status": "skipped",
+            "message": f"Using previously extracted content (saved {extraction.created_at.strftime('%Y-%m-%d %H:%M') if extraction.created_at else 'earlier'})"
+        }
+        yield f"event: progress\ndata: {json.dumps(skipped_event)}\n\n"
+
         def progress_callback(event: dict):
             """Callback to push progress events to the queue."""
             progress_queue.put(("progress", event))

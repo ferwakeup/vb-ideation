@@ -15,18 +15,27 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
   const { t } = useTranslation('scorer');
   const [displayProgress, setDisplayProgress] = useState<ProgressEvent | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [extractionSkipped, setExtractionSkipped] = useState(false);
+  const [skippedMessage, setSkippedMessage] = useState<string | null>(null);
 
   // Smooth transition when progress updates
   useEffect(() => {
     if (progress) {
       setDisplayProgress(progress);
+
+      // Check if extraction was skipped
+      if (progress.step === 1 && progress.status === 'skipped') {
+        setExtractionSkipped(true);
+        setSkippedMessage((progress as ProgressEvent & { message?: string }).message || t('progress.extractionSkipped'));
+      }
+
       if (progress.status === 'completed') {
         setIsCompleting(true);
         const timer = setTimeout(() => setIsCompleting(false), 500);
         return () => clearTimeout(timer);
       }
     }
-  }, [progress]);
+  }, [progress, t]);
 
   // Calculate progress percentage
   const totalSteps = displayProgress?.total_steps || 17;
@@ -60,6 +69,16 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
 
   return (
     <div className="flex flex-col items-center justify-center py-8">
+      {/* Skipped extraction banner */}
+      {extractionSkipped && skippedMessage && (
+        <div className="mb-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-sm text-blue-700">
+          <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{skippedMessage}</span>
+        </div>
+      )}
+
       {/* Circular Progress */}
       <div className="relative">
         <svg
@@ -145,6 +164,7 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
         {[1, 2, 3, 4, 5].map((num) => {
           const isActive = parseInt(agentNumber) === num;
           const isCompleted = parseInt(agentNumber) > num;
+          const isSkipped = num === 1 && extractionSkipped;
           const agentColors: Record<number, string> = {
             1: '#3B82F6',
             2: '#8B5CF6',
@@ -159,16 +179,20 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
               className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-all duration-300 ${
                 isActive
                   ? 'scale-110 shadow-lg'
-                  : isCompleted
+                  : isCompleted || isSkipped
                   ? 'opacity-60'
                   : 'opacity-30'
               }`}
               style={{
-                backgroundColor: isActive || isCompleted ? agentColors[num] : '#E5E7EB',
-                color: isActive || isCompleted ? 'white' : '#9CA3AF'
+                backgroundColor: isActive || isCompleted || isSkipped ? agentColors[num] : '#E5E7EB',
+                color: isActive || isCompleted || isSkipped ? 'white' : '#9CA3AF'
               }}
             >
-              {isCompleted ? (
+              {isSkipped ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              ) : isCompleted ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>

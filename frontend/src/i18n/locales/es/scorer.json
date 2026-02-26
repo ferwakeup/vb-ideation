@@ -76,6 +76,7 @@
     "initializing": "Inicializando",
     "preparing": "Preparando para analizar tu documento...",
     "stepOf": "Paso {{current}} de {{total}}",
+    "extractionSkipped": "Usando extraccion guardada previamente - saltando Paso 1",
     "agents": {
       "extract": "Extraer",
       "ideas": "Ideas",
