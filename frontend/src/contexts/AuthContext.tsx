@@ -20,6 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = 'vb_auth_token';
+const USER_KEY = 'vb_auth_user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -30,14 +31,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = localStorage.getItem(TOKEN_KEY);
+      const storedUser = localStorage.getItem(USER_KEY);
+
       if (storedToken) {
+        // First, restore cached user data for immediate display
+        if (storedUser) {
+          try {
+            const cachedUser = JSON.parse(storedUser) as User;
+            setUser(cachedUser);
+            setToken(storedToken);
+          } catch {
+            // Invalid cached user data, ignore
+          }
+        }
+
+        // Then validate token with backend
         try {
           const userData = await api.getMe(storedToken);
           setUser(userData);
           setToken(storedToken);
-        } catch {
-          // Token is invalid, clear it
-          localStorage.removeItem(TOKEN_KEY);
+          // Update cached user data
+          localStorage.setItem(USER_KEY, JSON.stringify(userData));
+        } catch (error) {
+          // Only clear token on 401 (unauthorized) errors
+          const isAuthError = error &&
+            typeof error === 'object' &&
+            'response' in error &&
+            (error as { response?: { status?: number } }).response?.status === 401;
+
+          if (isAuthError) {
+            // Token is invalid, clear everything
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
+            setToken(null);
+          }
+          // For other errors (network, server), keep the cached user/token
+          // The user can continue using the app with cached data
         }
       }
       setIsLoading(false);
@@ -54,9 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
 
-    // Fetch user data
+    // Fetch user data and cache it
     const userData = await api.getMe(newToken);
     setUser(userData);
+    localStorage.setItem(USER_KEY, JSON.stringify(userData));
   }, []);
 
   const register = useCallback(async (request: RegisterRequest): Promise<RegisterResponse> => {
@@ -67,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     setToken(null);
     setUser(null);
   }, []);
