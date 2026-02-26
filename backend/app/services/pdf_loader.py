@@ -77,9 +77,10 @@ def get_max_tokens_for_provider(provider: str) -> int:
         Maximum safe tokens for document content
     """
     provider_limits = {
-        "groq": 8000,      # Conservative for Groq's TPM limits
+        "groq": 8000,         # Conservative for Groq's TPM limits
         "anthropic": 150000,  # Claude has 200K context
         "openai": 100000,     # GPT-4o has 128K context
+        "google": 900000,     # Gemini 1.5 Pro has 2M context, conservative limit
         "ollama": 8000        # Conservative default
     }
     return provider_limits.get(provider.lower(), 8000)

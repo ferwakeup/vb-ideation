@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
 
     # Default provider and model settings
-    default_provider: str = "anthropic"  # ollama, groq, anthropic, openai
+    default_provider: str = "anthropic"  # ollama, groq, anthropic, openai, google
 
     # Provider-specific model defaults
     ollama_model: str = "mistral"
@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     groq_model: str = "llama-3.3-70b-versatile"
     anthropic_model: str = "claude-sonnet-4-20250514"
     openai_model: str = "gpt-4o"
+    google_model: str = "gemini-2.0-flash"
 
     # URL configuration (backward compatibility)
     urls_config_path: str = "config/urls.json"

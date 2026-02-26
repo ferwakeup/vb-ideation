@@ -1,11 +1,12 @@
 """
 LLM Factory - Multi-provider LLM creation service.
-Supports Ollama, Groq, Anthropic, and OpenAI.
+Supports Ollama, Groq, Anthropic, OpenAI, and Google Gemini.
 """
 from langchain_ollama import ChatOllama
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from typing import Optional
 import logging
@@ -25,17 +26,19 @@ class LLMFactory:
         openai_api_key: Optional[str] = None,
         anthropic_api_key: Optional[str] = None,
         groq_api_key: Optional[str] = None,
+        google_api_key: Optional[str] = None,
         ollama_base_url: Optional[str] = None,
     ):
         """
         Initialize LLM factory.
 
         Args:
-            provider: LLM provider (ollama, groq, anthropic, openai)
+            provider: LLM provider (ollama, groq, anthropic, openai, google)
             model: Model name (optional, uses provider default if not specified)
             openai_api_key: OpenAI API key
             anthropic_api_key: Anthropic API key
             groq_api_key: Groq API key
+            google_api_key: Google API key
             ollama_base_url: Ollama server URL
         """
         settings = get_settings()
@@ -44,6 +47,7 @@ class LLMFactory:
         self.openai_api_key = openai_api_key or settings.openai_api_key
         self.anthropic_api_key = anthropic_api_key or settings.anthropic_api_key
         self.groq_api_key = groq_api_key or settings.groq_api_key
+        self.google_api_key = google_api_key or settings.google_api_key
         self.ollama_base_url = ollama_base_url or settings.ollama_base_url
 
         # Set model based on provider
@@ -58,6 +62,8 @@ class LLMFactory:
                 self.model = settings.anthropic_model
             elif self.provider == "openai":
                 self.model = settings.openai_model
+            elif self.provider == "google":
+                self.model = settings.google_model
             else:
                 self.model = "gpt-4o"
 
@@ -119,10 +125,22 @@ class LLMFactory:
                 temperature=temperature
             )
 
+        elif self.provider == "google":
+            if not self.google_api_key:
+                raise ValueError(
+                    "Google API key not set. Set GOOGLE_API_KEY environment variable. "
+                    "Get API key at: https://aistudio.google.com/apikey"
+                )
+            return ChatGoogleGenerativeAI(
+                model=self.model,
+                google_api_key=self.google_api_key,
+                temperature=temperature
+            )
+
         else:
             raise ValueError(
                 f"Unsupported provider: {self.provider}. "
-                f"Choose from: 'ollama', 'groq', 'anthropic', or 'openai'"
+                f"Choose from: 'ollama', 'groq', 'anthropic', 'openai', or 'google'"
             )
 
     def get_provider_info(self) -> dict:
