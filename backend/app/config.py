@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     groq_model: str = "llama-3.3-70b-versatile"
     anthropic_model: str = "claude-sonnet-4-20250514"
     openai_model: str = "gpt-4o"
-    google_model: str = "gemini-2.5-flash-preview-05-20"
+    google_model: str = "gemini-2.5-flash-lite"
 
     # URL configuration (backward compatibility)
     urls_config_path: str = "config/urls.json"
