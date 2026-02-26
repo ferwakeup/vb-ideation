@@ -14,32 +14,59 @@ import Extractions from './Extractions';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalysis } from '../contexts/AnalysisContext';
 
-// Provider options for PDF analysis
+// Provider options for PDF analysis with pricing (per 1M tokens)
 const PDF_PROVIDER_OPTIONS = [
   {
     value: 'anthropic',
     label: 'Anthropic Claude',
     models: [
-      { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4', description: 'Best balance of quality & cost', recommended: true },
-      { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', description: 'Fast & budget-friendly' },
+      { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4', description: 'Best balance of quality & cost', recommended: true, inputPrice: 3, outputPrice: 15 },
+      { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', description: 'Fast & budget-friendly', inputPrice: 0.25, outputPrice: 1.25 },
     ]
   },
   {
     value: 'openai',
     label: 'OpenAI',
     models: [
-      { value: 'gpt-4o', label: 'GPT-4o', description: 'High quality, moderate cost', recommended: true },
-      { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Fast & cheap' },
+      { value: 'gpt-4o', label: 'GPT-4o', description: 'High quality, moderate cost', recommended: true, inputPrice: 2.5, outputPrice: 10 },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Fast & cheap', inputPrice: 0.15, outputPrice: 0.6 },
+    ]
+  },
+  {
+    value: 'google',
+    label: 'Google Gemini',
+    models: [
+      { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', description: 'Very fast, excellent value', recommended: true, inputPrice: 0.1, outputPrice: 0.4 },
+      { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', description: 'High quality, 2M context', inputPrice: 1.25, outputPrice: 5 },
+      { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Fast & cheap', inputPrice: 0.075, outputPrice: 0.3 },
     ]
   },
   {
     value: 'groq',
     label: 'Groq (Free)',
     models: [
-      { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B', description: 'Free, fast, good quality', recommended: true },
+      { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B', description: 'Free, fast, good quality', recommended: true, inputPrice: 0, outputPrice: 0 },
     ]
   },
 ];
+
+// Estimate tokens from file size (rough: 1 token ≈ 4 chars, PDF overhead ≈ 2x)
+const estimateTokensFromFile = (file: File): number => {
+  // PDF files typically have ~50% actual text content
+  const estimatedTextBytes = file.size * 0.5;
+  // ~4 characters per token
+  return Math.round(estimatedTextBytes / 4);
+};
+
+// Estimate total cost for analysis (5 agents, each with input + output)
+const estimateCost = (inputTokens: number, model: { inputPrice: number; outputPrice: number }): number => {
+  // Estimation: 5 agents, each processes ~inputTokens input and generates ~2000 output tokens
+  const totalInputTokens = inputTokens * 5;
+  const totalOutputTokens = 2000 * 5; // ~10K output tokens total
+  const inputCost = (totalInputTokens / 1_000_000) * model.inputPrice;
+  const outputCost = (totalOutputTokens / 1_000_000) * model.outputPrice;
+  return inputCost + outputCost;
+};
 
 const MODEL_OPTIONS = [
   // OpenAI Models
@@ -97,6 +124,7 @@ export default function IdeaScorer() {
 
   // PDF mode state - only input selection, not analysis state
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [sector, setSector] = useState('mobility');
   const [pdfProvider, setPdfProvider] = useState('anthropic');
   const [pdfModel, setPdfModel] = useState('claude-sonnet-4-20250514');
@@ -117,6 +145,7 @@ export default function IdeaScorer() {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
+      setEstimatedTokens(estimateTokensFromFile(file));
     }
   }, []);
 
@@ -129,6 +158,8 @@ export default function IdeaScorer() {
       setSector(extraction.sector || 'mobility');
       setShowExtractionSelector(false);
       setPdfFile(null); // Clear any selected file
+      // Use token count from extraction if available, otherwise estimate
+      setEstimatedTokens(extraction.token_count || 15000);
     } catch (err) {
       console.error('Failed to load extraction:', err);
     }
@@ -348,6 +379,51 @@ export default function IdeaScorer() {
                       )}
                     </label>
                   </div>
+                </div>
+              )}
+
+              {/* Cost Estimation - show after file upload */}
+              {(pdfFile || selectedExtraction) && estimatedTokens > 0 && (
+                <div className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm font-semibold text-blue-800">Estimated Cost by Model</span>
+                    <span className="text-xs text-blue-600 ml-auto">~{estimatedTokens.toLocaleString()} tokens</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {PDF_PROVIDER_OPTIONS.flatMap(provider =>
+                      provider.models.map(model => {
+                        const cost = estimateCost(estimatedTokens, model);
+                        const isSelected = pdfProvider === provider.value && pdfModel === model.value;
+                        const isFree = cost === 0;
+                        return (
+                          <button
+                            key={model.value}
+                            onClick={() => {
+                              setPdfProvider(provider.value);
+                              setPdfModel(model.value);
+                            }}
+                            className={`p-2 rounded-lg border text-left transition-all ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-100 ring-2 ring-blue-500'
+                                : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                            }`}
+                          >
+                            <div className="text-xs font-medium text-gray-800 truncate">{model.label}</div>
+                            <div className={`text-lg font-bold ${isFree ? 'text-green-600' : 'text-blue-600'}`}>
+                              {isFree ? 'Free' : `$${cost.toFixed(3)}`}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">{provider.label}</div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Click a model to select it. Estimates based on ~{estimatedTokens.toLocaleString()} input tokens × 5 agents.
+                  </p>
                 </div>
               )}
 
