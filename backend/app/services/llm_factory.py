@@ -100,7 +100,9 @@ class LLMFactory:
             return ChatGroq(
                 model=self.model,
                 api_key=self.groq_api_key,
-                temperature=temperature
+                temperature=temperature,
+                timeout=60,
+                max_retries=2
             )
 
         elif self.provider == "anthropic":
@@ -111,7 +113,9 @@ class LLMFactory:
             return ChatAnthropic(
                 model=self.model,
                 api_key=self.anthropic_api_key,
-                temperature=temperature
+                temperature=temperature,
+                timeout=120,
+                max_retries=2
             )
 
         elif self.provider == "openai":
@@ -122,7 +126,9 @@ class LLMFactory:
             return ChatOpenAI(
                 model=self.model,
                 api_key=self.openai_api_key,
-                temperature=temperature
+                temperature=temperature,
+                timeout=120,
+                max_retries=2
             )
 
         elif self.provider == "google":
@@ -134,7 +140,9 @@ class LLMFactory:
             return ChatGoogleGenerativeAI(
                 model=self.model,
                 google_api_key=self.google_api_key,
-                temperature=temperature
+                temperature=temperature,
+                timeout=120,  # 2 minute timeout
+                max_retries=2
             )
 
         else:
