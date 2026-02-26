@@ -1,0 +1,37 @@
+{
+  "nav": {
+    "logIn": "Log In",
+    "getStarted": "Get Started"
+  },
+  "hero": {
+    "title1": "AI-Powered Venture",
+    "title2": "Idea Scoring",
+    "subtitle": "Evaluate business ideas with our multi-agent AI system. Get comprehensive analysis across 11 dimensions with actionable insights.",
+    "cta": "Start Scoring Ideas",
+    "signIn": "Sign In"
+  },
+  "features": {
+    "title": "Powerful Features for Venture Builders",
+    "analysis": {
+      "title": "11-Dimension Analysis",
+      "description": "Comprehensive evaluation covering market potential, competitive advantage, team fit, scalability, and more."
+    },
+    "multiAgent": {
+      "title": "Multi-Agent System",
+      "description": "5 specialized AI agents work together: extraction, idea generation, evaluation, synthesis, and consolidation."
+    },
+    "pdf": {
+      "title": "PDF Analysis",
+      "description": "Upload business documents, pitch decks, or research papers. Our AI extracts insights and generates scorable ideas."
+    }
+  },
+  "cta": {
+    "title": "Ready to Evaluate Your Next Big Idea?",
+    "subtitle": "Join the Moven team and start making data-driven venture decisions.",
+    "button": "Create Your Account",
+    "footer": "Start scoring your venture ideas today"
+  },
+  "footer": {
+    "version": "Multi-Agent System v2.0.0"
+  }
+}

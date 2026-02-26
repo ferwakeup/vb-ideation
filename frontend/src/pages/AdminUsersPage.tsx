@@ -3,6 +3,7 @@
  * Displays registered users and allows admin to manage their status
  */
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import type { User } from '../types/index';
@@ -16,36 +17,38 @@ function getUserStatus(user: User): UserStatus {
   return 'active';
 }
 
-function getStatusBadge(status: UserStatus) {
-  const badges = {
-    active: {
-      bg: 'bg-green-100',
-      text: 'text-green-800',
-      dot: 'bg-green-500',
-      label: 'Active'
-    },
-    pending: {
-      bg: 'bg-yellow-100',
-      text: 'text-yellow-800',
-      dot: 'bg-yellow-500',
-      label: 'Pending Verification'
-    },
-    disabled: {
-      bg: 'bg-red-100',
-      text: 'text-red-800',
-      dot: 'bg-red-500',
-      label: 'Disabled'
-    }
-  };
-  return badges[status];
-}
-
 export default function AdminUsersPage() {
+  const { t } = useTranslation('admin');
+  const { t: tCommon } = useTranslation('common');
   const { token, user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+
+  const getStatusBadge = (status: UserStatus) => {
+    const badges = {
+      active: {
+        bg: 'bg-green-100',
+        text: 'text-green-800',
+        dot: 'bg-green-500',
+        label: t('status.active')
+      },
+      pending: {
+        bg: 'bg-yellow-100',
+        text: 'text-yellow-800',
+        dot: 'bg-yellow-500',
+        label: t('status.pending')
+      },
+      disabled: {
+        bg: 'bg-red-100',
+        text: 'text-red-800',
+        dot: 'bg-red-500',
+        label: t('status.disabled')
+      }
+    };
+    return badges[status];
+  };
 
   useEffect(() => {
     loadUsers();
@@ -62,9 +65,9 @@ export default function AdminUsersPage() {
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { detail?: string } } };
-        setError(axiosError.response?.data?.detail || 'Failed to load users');
+        setError(axiosError.response?.data?.detail || t('errors.loadFailed'));
       } else {
-        setError('Failed to load users');
+        setError(t('errors.loadFailed'));
       }
     } finally {
       setIsLoading(false);
@@ -83,9 +86,9 @@ export default function AdminUsersPage() {
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { detail?: string } } };
-        setError(axiosError.response?.data?.detail || 'Failed to update user');
+        setError(axiosError.response?.data?.detail || t('errors.updateFailed'));
       } else {
-        setError('Failed to update user');
+        setError(t('errors.updateFailed'));
       }
     } finally {
       setActionLoading(null);
@@ -104,9 +107,9 @@ export default function AdminUsersPage() {
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { detail?: string } } };
-        setError(axiosError.response?.data?.detail || 'Failed to update user');
+        setError(axiosError.response?.data?.detail || t('errors.updateFailed'));
       } else {
-        setError('Failed to update user');
+        setError(t('errors.updateFailed'));
       }
     } finally {
       setActionLoading(null);
@@ -115,7 +118,7 @@ export default function AdminUsersPage() {
 
   const deleteUser = async (userId: number) => {
     if (!token) return;
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    if (!confirm(t('confirmDelete'))) {
       return;
     }
 
@@ -126,9 +129,9 @@ export default function AdminUsersPage() {
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { detail?: string } } };
-        setError(axiosError.response?.data?.detail || 'Failed to delete user');
+        setError(axiosError.response?.data?.detail || t('errors.deleteFailed'));
       } else {
-        setError('Failed to delete user');
+        setError(t('errors.deleteFailed'));
       }
     } finally {
       setActionLoading(null);
@@ -152,8 +155,8 @@ export default function AdminUsersPage() {
           <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <h2 className="text-xl font-semibold text-red-800 mb-2">Access Denied</h2>
-          <p className="text-red-600">You don't have permission to access this page.</p>
+          <h2 className="text-xl font-semibold text-red-800 mb-2">{t('accessDenied')}</h2>
+          <p className="text-red-600">{t('noPermission')}</p>
         </div>
       </div>
     );
@@ -163,8 +166,8 @@ export default function AdminUsersPage() {
     <div className="p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-        <p className="text-gray-600 mt-1">Manage registered users and their access</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+        <p className="text-gray-600 mt-1">{t('subtitle')}</p>
       </div>
 
       {/* Error Alert */}
@@ -189,7 +192,7 @@ export default function AdminUsersPage() {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Users</p>
+              <p className="text-sm font-medium text-gray-500">{t('stats.totalUsers')}</p>
               <p className="text-2xl font-semibold text-gray-900">{users.length}</p>
             </div>
           </div>
@@ -203,7 +206,7 @@ export default function AdminUsersPage() {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Active</p>
+              <p className="text-sm font-medium text-gray-500">{t('stats.active')}</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {users.filter(u => u.is_active && u.is_verified).length}
               </p>
@@ -219,7 +222,7 @@ export default function AdminUsersPage() {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Pending</p>
+              <p className="text-sm font-medium text-gray-500">{t('stats.pending')}</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {users.filter(u => u.is_active && !u.is_verified).length}
               </p>
@@ -235,7 +238,7 @@ export default function AdminUsersPage() {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Disabled</p>
+              <p className="text-sm font-medium text-gray-500">{t('stats.disabled')}</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {users.filter(u => !u.is_active).length}
               </p>
@@ -249,33 +252,33 @@ export default function AdminUsersPage() {
         {isLoading ? (
           <div className="p-12 text-center">
             <Spinner size="lg" />
-            <p className="text-gray-500 mt-4">Loading users...</p>
+            <p className="text-gray-500 mt-4">{t('loading')}</p>
           </div>
         ) : users.length === 0 ? (
           <div className="p-12 text-center">
             <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
-            <p className="text-gray-500">No users found</p>
+            <p className="text-gray-500">{t('noUsers')}</p>
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
+                  {t('table.user')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  {t('table.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
+                  {t('table.role')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Registered
+                  {t('table.registered')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  {t('table.actions')}
                 </th>
               </tr>
             </thead>
@@ -298,7 +301,7 @@ export default function AdminUsersPage() {
                           <div className="text-sm font-medium text-gray-900">
                             {user.full_name}
                             {isCurrentUser && (
-                              <span className="ml-2 text-xs text-blue-600">(You)</span>
+                              <span className="ml-2 text-xs text-blue-600">{tCommon('you')}</span>
                             )}
                           </div>
                           <div className="text-sm text-gray-500">{user.email}</div>
@@ -314,10 +317,10 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {user.is_admin ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          Admin
+                          {t('roles.admin')}
                         </span>
                       ) : (
-                        <span className="text-sm text-gray-500">User</span>
+                        <span className="text-sm text-gray-500">{t('roles.user')}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -338,9 +341,9 @@ export default function AdminUsersPage() {
                                 ? 'bg-red-100 text-red-700 hover:bg-red-200'
                                 : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
-                            title={user.is_active ? 'Disable user' : 'Enable user'}
+                            title={user.is_active ? t('actions.disableUser') : t('actions.enableUser')}
                           >
-                            {user.is_active ? 'Disable' : 'Enable'}
+                            {user.is_active ? t('actions.disable') : t('actions.enable')}
                           </button>
 
                           {/* Toggle Verified */}
@@ -348,9 +351,9 @@ export default function AdminUsersPage() {
                             <button
                               onClick={() => toggleUserVerified(user.id, user.is_verified)}
                               className="px-3 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors"
-                              title="Manually verify user"
+                              title={t('actions.manualVerify')}
                             >
-                              Verify
+                              {t('actions.verify')}
                             </button>
                           )}
 
@@ -358,9 +361,9 @@ export default function AdminUsersPage() {
                           <button
                             onClick={() => deleteUser(user.id)}
                             className="px-3 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                            title="Delete user"
+                            title={t('actions.deleteUser')}
                           >
-                            Delete
+                            {t('actions.delete')}
                           </button>
                         </div>
                       )}

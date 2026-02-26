@@ -4,11 +4,15 @@
  */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from '../components/Spinner';
 import PasswordStrength from '../components/PasswordStrength';
+import LanguageSelector from '../components/LanguageSelector';
 
 export default function RegisterPage() {
+  const { t } = useTranslation('auth');
+  const { t: tCommon } = useTranslation('common');
   const { register } = useAuth();
 
   const [fullName, setFullName] = useState('');
@@ -21,22 +25,22 @@ export default function RegisterPage() {
 
   const validateForm = (): boolean => {
     if (!fullName.trim()) {
-      setError('Full name is required');
+      setError(t('register.validation.fullNameRequired'));
       return false;
     }
 
     if (!email.trim()) {
-      setError('Email is required');
+      setError(t('register.validation.emailRequired'));
       return false;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('register.validation.passwordMinLength'));
       return false;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('register.validation.passwordsNoMatch'));
       return false;
     }
 
@@ -63,12 +67,12 @@ export default function RegisterPage() {
         if (typeof detail === 'string') {
           setError(detail);
         } else if (Array.isArray(detail) && detail.length > 0) {
-          setError(detail[0].msg || 'Registration failed');
+          setError(detail[0].msg || t('register.defaultError'));
         } else {
-          setError('Registration failed. Please try again.');
+          setError(t('register.defaultError'));
         }
       } else {
-        setError('An error occurred. Please try again.');
+        setError(t('register.genericError'));
       }
     } finally {
       setIsLoading(false);
@@ -88,7 +92,7 @@ export default function RegisterPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <span className="text-white font-bold text-2xl">VB Ideation</span>
+              <span className="text-white font-bold text-2xl">{tCommon('appName')}</span>
             </Link>
           </div>
 
@@ -99,25 +103,25 @@ export default function RegisterPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Check your email</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">{t('verification.checkEmail')}</h1>
             <p className="text-gray-400 mb-6">
-              We've sent a verification link to<br />
+              {t('verification.sentTo')}<br />
               <span className="text-white font-medium">{email}</span>
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              Click the link in the email to verify your account. The link will expire in 24 hours.
+              {t('verification.linkExpiry')}
             </p>
             <div className="space-y-3">
               <Link
                 to="/login"
                 className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
               >
-                Go to Login
+                {t('verification.goToLogin')}
               </Link>
               <p className="text-sm text-gray-500">
-                Didn't receive the email?{' '}
+                {t('verification.didntReceive')}{' '}
                 <Link to="/resend-verification" className="text-blue-500 hover:text-blue-400">
-                  Resend verification
+                  {t('verification.resendVerification')}
                 </Link>
               </p>
             </div>
@@ -138,14 +142,19 @@ export default function RegisterPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-white font-bold text-2xl">VB Ideation</span>
+            <span className="text-white font-bold text-2xl">{tCommon('appName')}</span>
           </Link>
         </div>
 
         {/* Register Card */}
         <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 shadow-xl">
-          <h1 className="text-2xl font-bold text-white mb-2">Create an account</h1>
-          <p className="text-gray-400 mb-6">Join the Moven venture scoring platform</p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-white mb-1">{t('register.title')}</h1>
+              <p className="text-gray-400">{t('register.subtitle')}</p>
+            </div>
+            <LanguageSelector variant="dark" compact />
+          </div>
 
           {error && (
             <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6 animate-in fade-in duration-200">
@@ -156,7 +165,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-2">
-                Full name
+                {t('register.fullName')}
               </label>
               <input
                 id="fullName"
@@ -165,13 +174,13 @@ export default function RegisterPage() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="John Doe"
+                placeholder={t('register.fullNamePlaceholder')}
               />
             </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email address
+                {t('register.email')}
               </label>
               <input
                 id="email"
@@ -180,13 +189,13 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@example.com"
+                placeholder={t('register.emailPlaceholder')}
               />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                Password
+                {t('register.password')}
               </label>
               <input
                 id="password"
@@ -196,14 +205,14 @@ export default function RegisterPage() {
                 required
                 minLength={8}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="At least 8 characters"
+                placeholder={t('register.passwordPlaceholder')}
               />
               <PasswordStrength password={password} />
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                Confirm password
+                {t('register.confirmPassword')}
               </label>
               <input
                 id="confirmPassword"
@@ -212,7 +221,7 @@ export default function RegisterPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Re-enter your password"
+                placeholder={t('register.confirmPasswordPlaceholder')}
               />
             </div>
 
@@ -224,10 +233,10 @@ export default function RegisterPage() {
               {isLoading ? (
                 <>
                   <Spinner size="sm" />
-                  <span>Creating account...</span>
+                  <span>{t('register.submitting')}</span>
                 </>
               ) : (
-                'Create Account'
+                t('register.submit')
               )}
             </button>
           </form>
@@ -235,16 +244,16 @@ export default function RegisterPage() {
 
         {/* Login Link */}
         <p className="text-center text-gray-400 mt-6">
-          Already have an account?{' '}
+          {t('register.hasAccount')}{' '}
           <Link to="/login" className="text-blue-500 hover:text-blue-400 font-medium">
-            Sign in
+            {t('register.signIn')}
           </Link>
         </p>
 
         {/* Back to Home */}
         <p className="text-center mt-4">
           <Link to="/" className="text-gray-500 hover:text-gray-400 text-sm">
-            Back to home
+            {tCommon('backToHome')}
           </Link>
         </p>
       </div>

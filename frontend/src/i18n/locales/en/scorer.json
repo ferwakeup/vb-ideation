@@ -1,0 +1,158 @@
+{
+  "title": "Venture Builder Idea Scorer",
+  "subtitle": "AI-powered analysis across 11 critical dimensions",
+  "documentSource": {
+    "label": "Document Source",
+    "tooltip": "Choose to upload a new PDF document or select from previously extracted documents to save processing time.",
+    "uploadNew": "Upload New PDF",
+    "uploadNewShort": "New PDF",
+    "usePrevious": "Use Previous Extraction",
+    "usePreviousShort": "Previous"
+  },
+  "extraction": {
+    "selectTitle": "Select a Previously Extracted Document",
+    "selectedDocument": "Selected Document",
+    "skippingExtraction": "Skipping extraction step"
+  },
+  "upload": {
+    "label": "Upload PDF Document",
+    "tooltip": "Upload a PDF document containing business idea information. The AI will extract text and analyze it.",
+    "tapToUpload": "Tap to upload PDF",
+    "pdfOnly": "PDF files only",
+    "invalidFile": "Please select a valid PDF file"
+  },
+  "sector": {
+    "label": "Business Sector",
+    "tooltip": "Select the industry sector that best matches the business idea. This helps the AI provide more relevant analysis.",
+    "options": {
+      "mobility": "Mobility",
+      "healthcare": "Healthcare",
+      "fintech": "Fintech",
+      "edtech": "Edtech",
+      "sustainability": "Sustainability",
+      "retail": "Retail",
+      "enterprise": "Enterprise",
+      "consumer": "Consumer",
+      "other": "Other"
+    }
+  },
+  "provider": {
+    "info": "Powered by Groq (Llama 3.3 70B) - Fast & Free"
+  },
+  "actions": {
+    "analyze": "Analyze PDF",
+    "analyzeSkip": "Analyze (Skip Extraction)",
+    "analyzing": "Analyzing...",
+    "cancel": "Cancel Analysis",
+    "debugPanel": "Debug Panel",
+    "viewDetails": "View Analysis Details",
+    "startNew": "Start New Analysis"
+  },
+  "errors": {
+    "selectFile": "Please select a PDF file",
+    "selectExtraction": "Please select an extraction",
+    "loadExtraction": "Failed to load extraction"
+  },
+  "results": {
+    "ideaSummary": "Business Idea Summary",
+    "overallScore": "Overall Score",
+    "analyzedUsing": "Analyzed using:",
+    "source": "Source",
+    "sector": "Sector",
+    "processingTime": "Processing Time",
+    "totalTokens": "Total Tokens Used",
+    "apiCalls": "API Calls Made",
+    "totalCost": "Total Cost",
+    "dimensionScores": "(dimension scores)",
+    "detailedScores": "Detailed Dimension Scores",
+    "keyStrengths": "Key Strengths",
+    "keyConcerns": "Key Concerns"
+  },
+  "loading": {
+    "analyzing": "Analyzing business idea across 11 dimensions... This may take 30-60 seconds."
+  },
+  "progress": {
+    "starting": "Starting...",
+    "initializing": "Initializing",
+    "preparing": "Preparing to analyze your document...",
+    "stepOf": "Step {{current}} of {{total}}",
+    "agents": {
+      "extract": "Extract",
+      "ideas": "Ideas",
+      "eval": "Eval",
+      "synth": "Synth",
+      "final": "Final"
+    }
+  },
+  "history": {
+    "title": "History",
+    "subtitle": "View your analysis history and extracted documents",
+    "tabs": {
+      "analyses": "Analysis History",
+      "extractions": "Extracted Documents"
+    },
+    "documentsAnalyzed": "{{count}} document analyzed",
+    "documentsAnalyzed_plural": "{{count}} documents analyzed",
+    "clearHistory": "Clear History",
+    "confirmClear": "Are you sure you want to clear all history?",
+    "noAnalyses": "No analyses yet",
+    "noAnalysesHint": "Start by analyzing a PDF document in the Venture Scorer section.",
+    "startAnalysis": "Start Analysis",
+    "columns": {
+      "date": "Date",
+      "document": "Document",
+      "user": "User",
+      "sector": "Sector",
+      "overall": "Overall",
+      "recommendation": "Recommendation",
+      "actions": "Actions"
+    },
+    "viewDetails": "View details",
+    "confirmRemove": "Remove this entry from history?",
+    "modal": {
+      "analyzedOn": "Analyzed on",
+      "ideaSummary": "Idea Summary",
+      "overallScore": "Overall Score",
+      "processingTime": "Processing Time",
+      "recommendation": "Recommendation",
+      "dimensionScores": "Dimension Scores",
+      "keyStrengths": "Key Strengths",
+      "keyConcerns": "Key Concerns",
+      "analyzedBy": "Analyzed by",
+      "using": "Using"
+    }
+  },
+  "extractions": {
+    "title": "Extracted Documents",
+    "loading": "Loading extractions...",
+    "noExtractions": "No extractions yet",
+    "noExtractionsHint": "When you analyze a PDF, the extracted text will be saved here for reuse.",
+    "confirmDelete": "Are you sure you want to delete this extraction?",
+    "deleteError": "Failed to delete extraction",
+    "loadError": "Failed to load extractions",
+    "columns": {
+      "date": "Date",
+      "document": "Document",
+      "user": "User",
+      "model": "Model",
+      "sector": "Sector",
+      "tokens": "Tokens",
+      "size": "Size",
+      "actions": "Actions"
+    },
+    "spaceSaved": "{{percent}}% saved"
+  },
+  "dimensions": {
+    "marketPotential": "Market Potential",
+    "differentiatedApproach": "Diff. Approach",
+    "competitiveAdvantage": "Comp. Adv.",
+    "differentiatingElement": "Diff. Element",
+    "technicalFeasibility": "Tech. Feas.",
+    "rapidImplementation": "Rapid Impl.",
+    "aiEnablement": "AI Enable.",
+    "barrierToEntry": "Barrier",
+    "scalability": "Scalability",
+    "productFocused": "Product",
+    "subscription": "Subscription"
+  }
+}

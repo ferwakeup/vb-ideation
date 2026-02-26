@@ -1,0 +1,37 @@
+{
+  "nav": {
+    "logIn": "Iniciar Sesion",
+    "getStarted": "Comenzar"
+  },
+  "hero": {
+    "title1": "Evaluacion de Ideas",
+    "title2": "Impulsada por IA",
+    "subtitle": "Evalua ideas de negocio con nuestro sistema multi-agente de IA. Obtiene analisis completo en 11 dimensiones con recomendaciones accionables.",
+    "cta": "Comenzar a Evaluar Ideas",
+    "signIn": "Iniciar Sesion"
+  },
+  "features": {
+    "title": "Funcionalidades Poderosas para Venture Builders",
+    "analysis": {
+      "title": "Analisis en 11 Dimensiones",
+      "description": "Evaluacion completa que cubre potencial de mercado, ventaja competitiva, fit del equipo, escalabilidad y mas."
+    },
+    "multiAgent": {
+      "title": "Sistema Multi-Agente",
+      "description": "5 agentes de IA especializados trabajan juntos: extraccion, generacion de ideas, evaluacion, sintesis y consolidacion."
+    },
+    "pdf": {
+      "title": "Analisis de PDF",
+      "description": "Sube documentos de negocio, pitch decks o papers de investigacion. Nuestra IA extrae insights y genera ideas evaluables."
+    }
+  },
+  "cta": {
+    "title": "Listo para Evaluar tu Proxima Gran Idea?",
+    "subtitle": "Unete al equipo de Moven y comienza a tomar decisiones de venture basadas en datos.",
+    "button": "Crear tu Cuenta",
+    "footer": "Comienza a evaluar tus ideas de venture hoy"
+  },
+  "footer": {
+    "version": "Sistema Multi-Agente v2.0.0"
+  }
+}

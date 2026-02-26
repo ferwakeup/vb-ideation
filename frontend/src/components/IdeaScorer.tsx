@@ -1,8 +1,9 @@
 /**
  * Main component for scoring business ideas
  */
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import ScoreCard from './ScoreCard';
 import ScoreChart from './ScoreChart';
@@ -10,15 +11,8 @@ import LoadingSpinner from './LoadingSpinner';
 import ProgressTracker from './ProgressTracker';
 import DebugPanel from './DebugPanel';
 import Extractions from './Extractions';
-import { useHistory } from '../contexts/HistoryContext';
 import { useAuth } from '../contexts/AuthContext';
-import type {
-  ProgressEvent,
-  PDFScoringResult,
-  AgentArchitecture,
-  StepInfo,
-  ModelInfo
-} from '../types/index';
+import { useAnalysis } from '../contexts/AnalysisContext';
 
 const MODEL_OPTIONS = [
   // OpenAI Models
@@ -31,12 +25,6 @@ const MODEL_OPTIONS = [
   { value: 'gemini-2.5-flash', label: '✨ Gemini 2.5 Flash (Google)', provider: 'Google', description: 'Very fast & cheap (~$0.005-0.01)' },
   { value: 'gemini-flash-latest', label: '✨ Gemini Flash Latest (Google)', provider: 'Google', description: 'Latest flash model (~$0.005-0.01)' },
   { value: 'gemini-pro-latest', label: '✨ Gemini Pro Latest (Google)', provider: 'Google', description: 'Latest pro model (~$0.05-0.15)' },
-];
-
-const PDF_PROVIDER_OPTIONS = [
-  { value: 'anthropic', label: 'Anthropic Claude', model: 'claude-sonnet-4-20250514' },
-  { value: 'openai', label: 'OpenAI GPT-4', model: 'gpt-4o' },
-  { value: 'groq', label: 'Groq (Free, Fast)', model: 'llama-3.3-70b-versatile' },
 ];
 
 const SECTOR_OPTIONS = [
@@ -52,9 +40,25 @@ const SECTOR_OPTIONS = [
 ];
 
 export default function IdeaScorer() {
-  // History context
-  const { addEntry } = useHistory();
-  const { user, token } = useAuth();
+  // Translation
+  const { t } = useTranslation('scorer');
+  const { token } = useAuth();
+
+  // Analysis context - global state
+  const {
+    isAnalyzing,
+    progress,
+    result,
+    error,
+    completedSteps,
+    architecture,
+    steps,
+    modelInfo,
+    startPdfAnalysis,
+    startExtractionAnalysis,
+    cancelAnalysis,
+    clearResults,
+  } = useAnalysis();
 
   // Mode toggle: 'url' or 'pdf' - URL mode hidden but code preserved
   const [scoringMode] = useState<'url' | 'pdf'>('pdf');
@@ -64,15 +68,10 @@ export default function IdeaScorer() {
   const [customUrls, setCustomUrls] = useState<string[]>(['']);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
 
-  // PDF mode state
+  // PDF mode state - only input selection, not analysis state
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [sector, setSector] = useState('mobility');
   const [pdfProvider] = useState('groq');
-  const [isPdfScoring, setIsPdfScoring] = useState(false);
-  const [pdfProgress, setPdfProgress] = useState<ProgressEvent | null>(null);
-  const [pdfResult, setPdfResult] = useState<PDFScoringResult | null>(null);
-  const [pdfError, setPdfError] = useState<string | null>(null);
-  const abortRef = useRef<{ abort: () => void } | null>(null);
 
   // Extraction selection state
   const [showExtractionSelector, setShowExtractionSelector] = useState(false);
@@ -80,10 +79,6 @@ export default function IdeaScorer() {
 
   // Debug panel state
   const [isDebugOpen, setIsDebugOpen] = useState(false);
-  const [debugArchitecture, setDebugArchitecture] = useState<AgentArchitecture | null>(null);
-  const [debugSteps, setDebugSteps] = useState<StepInfo[]>([]);
-  const [debugModelInfo, setDebugModelInfo] = useState<ModelInfo | null>(null);
-  const [completedSteps, setCompletedSteps] = useState<Record<number, { duration: number; status: string }>>({});
 
   const scoreMutation = useMutation({
     mutationFn: api.scoreIdea,
@@ -94,9 +89,6 @@ export default function IdeaScorer() {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
-      setPdfError(null);
-    } else if (file) {
-      setPdfError('Please select a valid PDF file');
     }
   }, []);
 
@@ -111,136 +103,29 @@ export default function IdeaScorer() {
       setPdfFile(null); // Clear any selected file
     } catch (err) {
       console.error('Failed to load extraction:', err);
-      setPdfError('Failed to load extraction');
     }
   }, [token]);
 
   // Handle PDF scoring with progress
   const handlePdfScore = useCallback(() => {
     if (!pdfFile) {
-      setPdfError('Please select a PDF file');
       return;
     }
-
-    setIsPdfScoring(true);
-    setPdfProgress(null);
-    setPdfResult(null);
-    setPdfError(null);
-    setCompletedSteps({});
-
-    const provider = PDF_PROVIDER_OPTIONS.find(p => p.value === pdfProvider);
-
-    abortRef.current = api.scorePDFWithProgress(
-      {
-        file: pdfFile,
-        sector,
-        provider: pdfProvider,
-        model: provider?.model,
-        num_ideas: 3,
-        idea_index: 0,
-        use_checkpoints: true,
-      },
-      (progress) => {
-        setPdfProgress(progress);
-        // Track completed steps with timing
-        if (progress.status === 'completed' && progress.timing) {
-          setCompletedSteps(prev => ({
-            ...prev,
-            [progress.step]: {
-              duration: progress.timing?.step_elapsed_seconds || 0,
-              status: progress.status
-            }
-          }));
-        }
-      },
-      (result) => {
-        setPdfResult(result);
-        setIsPdfScoring(false);
-        setPdfProgress(null);
-        // Save to history with user info
-        addEntry(result, user);
-      },
-      (error) => {
-        setPdfError(error);
-        setIsPdfScoring(false);
-        setPdfProgress(null);
-      },
-      (init) => {
-        // Handle init event with architecture data
-        setDebugArchitecture(init.architecture);
-        setDebugSteps(init.steps);
-        setDebugModelInfo(init.model_info);
-      }
-    );
-  }, [pdfFile, sector, pdfProvider, addEntry, user]);
+    startPdfAnalysis(pdfFile, sector, pdfProvider);
+  }, [pdfFile, sector, pdfProvider, startPdfAnalysis]);
 
   // Handle extraction scoring with progress
   const handleExtractionScore = useCallback(() => {
     if (!selectedExtraction) {
-      setPdfError('Please select an extraction');
       return;
     }
-
-    setIsPdfScoring(true);
-    setPdfProgress(null);
-    setPdfResult(null);
-    setPdfError(null);
-    setCompletedSteps({});
-
-    const provider = PDF_PROVIDER_OPTIONS.find(p => p.value === pdfProvider);
-
-    abortRef.current = api.scoreExtractionWithProgress(
-      {
-        extraction_id: selectedExtraction.id,
-        sector,
-        provider: pdfProvider,
-        model: provider?.model,
-        num_ideas: 3,
-        idea_index: 0,
-      },
-      (progress) => {
-        setPdfProgress(progress);
-        // Track completed steps with timing
-        if (progress.status === 'completed' && progress.timing) {
-          setCompletedSteps(prev => ({
-            ...prev,
-            [progress.step]: {
-              duration: progress.timing?.step_elapsed_seconds || 0,
-              status: progress.status
-            }
-          }));
-        }
-      },
-      (result) => {
-        setPdfResult(result);
-        setIsPdfScoring(false);
-        setPdfProgress(null);
-        // Save to history with user info
-        addEntry(result, user);
-      },
-      (error) => {
-        setPdfError(error);
-        setIsPdfScoring(false);
-        setPdfProgress(null);
-      },
-      (init) => {
-        // Handle init event with architecture data
-        setDebugArchitecture(init.architecture);
-        setDebugSteps(init.steps);
-        setDebugModelInfo(init.model_info);
-      }
-    );
-  }, [selectedExtraction, sector, pdfProvider, addEntry, user]);
+    startExtractionAnalysis(selectedExtraction.id, selectedExtraction.fileName, sector, pdfProvider);
+  }, [selectedExtraction, sector, pdfProvider, startExtractionAnalysis]);
 
   // Cancel PDF scoring
   const handleCancelPdfScore = useCallback(() => {
-    if (abortRef.current) {
-      abortRef.current.abort();
-      abortRef.current = null;
-    }
-    setIsPdfScoring(false);
-    setPdfProgress(null);
-  }, []);
+    cancelAnalysis();
+  }, [cancelAnalysis]);
 
   const handleScore = () => {
     if (useConfig) {
@@ -302,10 +187,10 @@ export default function IdeaScorer() {
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">
-            Venture Builder Idea Scorer
+            {t('title')}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            AI-powered analysis across 11 critical dimensions
+            {t('subtitle')}
           </p>
         </div>
 
@@ -315,8 +200,8 @@ export default function IdeaScorer() {
           {/* Source Selection Toggle */}
           <div className="mb-4 sm:mb-6">
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-              Document Source
-              <InfoTooltip text="Choose to upload a new PDF document or select from previously extracted documents to save processing time." />
+              {t('documentSource.label')}
+              <InfoTooltip text={t('documentSource.tooltip')} />
             </label>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
@@ -334,8 +219,8 @@ export default function IdeaScorer() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
-                  <span className="hidden xs:inline">Upload New PDF</span>
-                  <span className="xs:hidden">New PDF</span>
+                  <span className="hidden xs:inline">{t('documentSource.uploadNew')}</span>
+                  <span className="xs:hidden">{t('documentSource.uploadNewShort')}</span>
                 </div>
               </button>
               <button
@@ -350,8 +235,8 @@ export default function IdeaScorer() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="hidden xs:inline">Use Previous Extraction</span>
-                  <span className="xs:hidden">Previous</span>
+                  <span className="hidden xs:inline">{t('documentSource.usePrevious')}</span>
+                  <span className="xs:hidden">{t('documentSource.usePreviousShort')}</span>
                 </div>
               </button>
             </div>
@@ -360,7 +245,7 @@ export default function IdeaScorer() {
               {/* Extraction Selector */}
               {showExtractionSelector && !selectedExtraction && (
                 <div className="mb-4 sm:mb-6 border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2 sm:mb-3">Select a Previously Extracted Document</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2 sm:mb-3">{t('extraction.selectTitle')}</h3>
                   <div className="bg-white rounded-lg border border-gray-200 max-h-48 sm:max-h-64 overflow-auto">
                     <Extractions
                       onSelectExtraction={handleSelectExtraction}
@@ -374,7 +259,7 @@ export default function IdeaScorer() {
               {selectedExtraction && (
                 <div className="mb-4 sm:mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Selected Document
+                    {t('extraction.selectedDocument')}
                   </label>
                   <div className="flex items-center justify-between border-2 border-green-300 bg-green-50 rounded-lg p-3 sm:p-4">
                     <div className="flex items-center gap-2 min-w-0">
@@ -383,7 +268,7 @@ export default function IdeaScorer() {
                       </svg>
                       <div className="min-w-0">
                         <span className="text-gray-700 font-medium text-sm sm:text-base truncate block">{selectedExtraction.fileName}</span>
-                        <p className="text-xs text-green-600">Skipping extraction step</p>
+                        <p className="text-xs text-green-600">{t('extraction.skippingExtraction')}</p>
                       </div>
                     </div>
                     <button
@@ -405,8 +290,8 @@ export default function IdeaScorer() {
               {!showExtractionSelector && !selectedExtraction && (
                 <div className="mb-4 sm:mb-6">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    Upload PDF Document
-                    <InfoTooltip text="Upload a PDF document containing business idea information. The AI will extract text and analyze it." />
+                    {t('upload.label')}
+                    <InfoTooltip text={t('upload.tooltip')} />
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors">
                     <input
@@ -429,8 +314,8 @@ export default function IdeaScorer() {
                           <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
-                          <span className="text-gray-600 text-sm sm:text-base">Tap to upload PDF</span>
-                          <p className="text-xs text-gray-400 mt-1">PDF files only</p>
+                          <span className="text-gray-600 text-sm sm:text-base">{t('upload.tapToUpload')}</span>
+                          <p className="text-xs text-gray-400 mt-1">{t('upload.pdfOnly')}</p>
                         </div>
                       )}
                     </label>
@@ -441,8 +326,8 @@ export default function IdeaScorer() {
               {/* Sector Selection */}
               <div className="mb-4 sm:mb-6">
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                  Business Sector
-                  <InfoTooltip text="Select the industry sector that best matches the business idea. This helps the AI provide more relevant analysis." />
+                  {t('sector.label')}
+                  <InfoTooltip text={t('sector.tooltip')} />
                 </label>
                 <select
                   value={sector}
@@ -464,23 +349,23 @@ export default function IdeaScorer() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-xs sm:text-sm font-medium text-blue-800">
-                    Powered by Groq (Llama 3.3 70B) - Fast & Free
+                    {t('provider.info')}
                   </span>
                 </div>
               </div>
 
               <button
                 onClick={selectedExtraction ? handleExtractionScore : handlePdfScore}
-                disabled={isPdfScoring || (!pdfFile && !selectedExtraction)}
+                disabled={isAnalyzing || (!pdfFile && !selectedExtraction)}
                 className="w-full bg-blue-600 text-white font-semibold px-4 sm:px-6 py-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
-                {isPdfScoring ? 'Analyzing...' : selectedExtraction ? 'Analyze (Skip Extraction)' : 'Analyze PDF'}
+                {isAnalyzing ? t('actions.analyzing') : selectedExtraction ? t('actions.analyzeSkip') : t('actions.analyze')}
               </button>
 
-              {pdfError && (
+              {error && (
                 <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md">
                   <p className="text-red-800 text-sm">
-                    Error: {pdfError}
+                    Error: {error}
                   </p>
                 </div>
               )}
@@ -586,15 +471,15 @@ export default function IdeaScorer() {
         )}
 
         {/* Loading State - PDF Mode with Progress */}
-        {isPdfScoring && (
+        {isAnalyzing && (
           <div className="bg-white rounded-lg shadow-md p-8">
-            <ProgressTracker progress={pdfProgress} />
+            <ProgressTracker progress={progress} />
             <div className="mt-6 flex items-center justify-center gap-4">
               <button
                 onClick={handleCancelPdfScore}
                 className="text-gray-500 hover:text-red-600 text-sm font-medium transition-colors"
               >
-                Cancel Analysis
+                {t('actions.cancel')}
               </button>
               <span className="text-gray-300">|</span>
               <button
@@ -605,7 +490,7 @@ export default function IdeaScorer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                Debug Panel
+                {t('actions.debugPanel')}
               </button>
             </div>
           </div>
@@ -738,15 +623,15 @@ export default function IdeaScorer() {
         )}
 
         {/* PDF Results Section */}
-        {pdfResult && (
+        {result && (
           <div className="space-y-8">
             {/* Idea Summary */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                Business Idea Summary
+                {t('results.ideaSummary')}
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                {pdfResult.idea_summary}
+                {result.idea_summary}
               </p>
             </div>
 
@@ -754,45 +639,45 @@ export default function IdeaScorer() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex flex-col md:flex-row justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4 md:mb-0">
-                  Overall Score
+                  {t('results.overallScore')}
                 </h2>
                 <div className="text-5xl font-bold text-blue-600">
-                  {pdfResult.overall_score.toFixed(1)}/10
+                  {result.overall_score.toFixed(1)}/10
                 </div>
               </div>
               <div
                 className={`text-lg font-semibold p-4 rounded-md border-2 text-center mb-4 ${getRecommendationStyle(
-                  pdfResult.recommendation
+                  result.recommendation
                 )}`}
               >
-                {pdfResult.recommendation}
+                {result.recommendation}
               </div>
 
               {/* Processing Info */}
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
                 <div className="mb-2 text-center">
-                  <span className="text-xs text-gray-600">Analyzed using: </span>
+                  <span className="text-xs text-gray-600">{t('results.analyzedUsing')} </span>
                   <span className="text-sm font-bold text-blue-800">
-                    {pdfResult.model_used.toUpperCase()}
+                    {result.model_used.toUpperCase()}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">Source</div>
+                    <div className="text-sm text-gray-600 mb-1">{t('results.source')}</div>
                     <div className="text-lg font-bold text-blue-700 truncate">
-                      {pdfResult.source}
+                      {result.source}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">Sector</div>
+                    <div className="text-sm text-gray-600 mb-1">{t('results.sector')}</div>
                     <div className="text-lg font-bold text-blue-700 capitalize">
-                      {pdfResult.sector}
+                      {result.sector}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">Processing Time</div>
+                    <div className="text-sm text-gray-600 mb-1">{t('results.processingTime')}</div>
                     <div className="text-lg font-bold text-green-700">
-                      {pdfResult.processing_time_seconds.toFixed(1)}s
+                      {result.processing_time_seconds.toFixed(1)}s
                     </div>
                   </div>
                 </div>
@@ -800,7 +685,7 @@ export default function IdeaScorer() {
             </div>
 
             {/* Chart Visualization */}
-            <ScoreChart scores={pdfResult.dimension_scores} />
+            <ScoreChart scores={result.dimension_scores} />
 
             {/* Key Insights */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -813,10 +698,10 @@ export default function IdeaScorer() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Key Strengths
+                  {t('results.keyStrengths')}
                 </h3>
                 <ul className="space-y-2">
-                  {pdfResult.key_strengths.map((strength, idx) => (
+                  {result.key_strengths.map((strength, idx) => (
                     <li key={idx} className="flex items-start">
                       <span className="text-green-600 mr-2">•</span>
                       <span className="text-gray-700">{strength}</span>
@@ -834,10 +719,10 @@ export default function IdeaScorer() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Key Concerns
+                  {t('results.keyConcerns')}
                 </h3>
                 <ul className="space-y-2">
-                  {pdfResult.key_concerns.map((concern, idx) => (
+                  {result.key_concerns.map((concern, idx) => (
                     <li key={idx} className="flex items-start">
                       <span className="text-red-600 mr-2">•</span>
                       <span className="text-gray-700">{concern}</span>
@@ -850,10 +735,10 @@ export default function IdeaScorer() {
             {/* Individual Dimension Scores */}
             <div>
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                Detailed Dimension Scores
+                {t('results.detailedScores')}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {pdfResult.dimension_scores.map((dim, idx) => (
+                {result.dimension_scores.map((dim, idx) => (
                   <ScoreCard key={idx} score={dim} />
                 ))}
               </div>
@@ -863,15 +748,14 @@ export default function IdeaScorer() {
             <div className="text-center flex items-center justify-center gap-4">
               <button
                 onClick={() => {
-                  setPdfResult(null);
+                  clearResults();
                   setPdfFile(null);
                   setSelectedExtraction(null);
                   setShowExtractionSelector(false);
-                  setCompletedSteps({});
                 }}
                 className="bg-gray-100 text-gray-700 font-semibold px-6 py-3 rounded-md hover:bg-gray-200 transition-colors"
               >
-                Start New Analysis
+                {t('actions.startNew')}
               </button>
               <button
                 onClick={() => setIsDebugOpen(true)}
@@ -881,7 +765,7 @@ export default function IdeaScorer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                View Analysis Details
+                {t('actions.viewDetails')}
               </button>
             </div>
           </div>
@@ -891,10 +775,10 @@ export default function IdeaScorer() {
         <DebugPanel
           isOpen={isDebugOpen}
           onClose={() => setIsDebugOpen(false)}
-          architecture={debugArchitecture}
-          steps={debugSteps}
-          modelInfo={debugModelInfo}
-          currentProgress={pdfProgress}
+          architecture={architecture}
+          steps={steps}
+          modelInfo={modelInfo}
+          currentProgress={progress}
           completedSteps={completedSteps}
         />
       </div>

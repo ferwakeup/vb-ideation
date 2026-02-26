@@ -1,0 +1,158 @@
+{
+  "title": "Evaluador de Ideas de Venture",
+  "subtitle": "Analisis impulsado por IA en 11 dimensiones criticas",
+  "documentSource": {
+    "label": "Fuente del Documento",
+    "tooltip": "Elige subir un nuevo documento PDF o selecciona de documentos extraidos previamente para ahorrar tiempo de procesamiento.",
+    "uploadNew": "Subir Nuevo PDF",
+    "uploadNewShort": "Nuevo PDF",
+    "usePrevious": "Usar Extraccion Anterior",
+    "usePreviousShort": "Anterior"
+  },
+  "extraction": {
+    "selectTitle": "Selecciona un Documento Extraido Previamente",
+    "selectedDocument": "Documento Seleccionado",
+    "skippingExtraction": "Saltando paso de extraccion"
+  },
+  "upload": {
+    "label": "Subir Documento PDF",
+    "tooltip": "Sube un documento PDF que contenga informacion de la idea de negocio. La IA extraera el texto y lo analizara.",
+    "tapToUpload": "Toca para subir PDF",
+    "pdfOnly": "Solo archivos PDF",
+    "invalidFile": "Por favor selecciona un archivo PDF valido"
+  },
+  "sector": {
+    "label": "Sector de Negocio",
+    "tooltip": "Selecciona el sector de industria que mejor coincida con la idea de negocio. Esto ayuda a la IA a proporcionar un analisis mas relevante.",
+    "options": {
+      "mobility": "Movilidad",
+      "healthcare": "Salud",
+      "fintech": "Fintech",
+      "edtech": "Edtech",
+      "sustainability": "Sostenibilidad",
+      "retail": "Retail",
+      "enterprise": "Empresarial",
+      "consumer": "Consumidor",
+      "other": "Otro"
+    }
+  },
+  "provider": {
+    "info": "Impulsado por Groq (Llama 3.3 70B) - Rapido y Gratis"
+  },
+  "actions": {
+    "analyze": "Analizar PDF",
+    "analyzeSkip": "Analizar (Saltar Extraccion)",
+    "analyzing": "Analizando...",
+    "cancel": "Cancelar Analisis",
+    "debugPanel": "Panel de Debug",
+    "viewDetails": "Ver Detalles del Analisis",
+    "startNew": "Iniciar Nuevo Analisis"
+  },
+  "errors": {
+    "selectFile": "Por favor selecciona un archivo PDF",
+    "selectExtraction": "Por favor selecciona una extraccion",
+    "loadExtraction": "Error al cargar la extraccion"
+  },
+  "results": {
+    "ideaSummary": "Resumen de la Idea de Negocio",
+    "overallScore": "Puntuacion General",
+    "analyzedUsing": "Analizado usando:",
+    "source": "Fuente",
+    "sector": "Sector",
+    "processingTime": "Tiempo de Procesamiento",
+    "totalTokens": "Tokens Totales Usados",
+    "apiCalls": "Llamadas API Realizadas",
+    "totalCost": "Costo Total",
+    "dimensionScores": "(puntuaciones por dimension)",
+    "detailedScores": "Puntuaciones Detalladas por Dimension",
+    "keyStrengths": "Fortalezas Clave",
+    "keyConcerns": "Preocupaciones Clave"
+  },
+  "loading": {
+    "analyzing": "Analizando idea de negocio en 11 dimensiones... Esto puede tomar 30-60 segundos."
+  },
+  "progress": {
+    "starting": "Iniciando...",
+    "initializing": "Inicializando",
+    "preparing": "Preparando para analizar tu documento...",
+    "stepOf": "Paso {{current}} de {{total}}",
+    "agents": {
+      "extract": "Extraer",
+      "ideas": "Ideas",
+      "eval": "Eval",
+      "synth": "Sintesis",
+      "final": "Final"
+    }
+  },
+  "history": {
+    "title": "Historial",
+    "subtitle": "Ver tu historial de analisis y documentos extraidos",
+    "tabs": {
+      "analyses": "Historial de Analisis",
+      "extractions": "Documentos Extraidos"
+    },
+    "documentsAnalyzed": "{{count}} documento analizado",
+    "documentsAnalyzed_plural": "{{count}} documentos analizados",
+    "clearHistory": "Limpiar Historial",
+    "confirmClear": "Estas seguro de que quieres limpiar todo el historial?",
+    "noAnalyses": "Sin analisis aun",
+    "noAnalysesHint": "Comienza analizando un documento PDF en la seccion del Evaluador de Ventures.",
+    "startAnalysis": "Iniciar Analisis",
+    "columns": {
+      "date": "Fecha",
+      "document": "Documento",
+      "user": "Usuario",
+      "sector": "Sector",
+      "overall": "General",
+      "recommendation": "Recomendacion",
+      "actions": "Acciones"
+    },
+    "viewDetails": "Ver detalles",
+    "confirmRemove": "Eliminar esta entrada del historial?",
+    "modal": {
+      "analyzedOn": "Analizado el",
+      "ideaSummary": "Resumen de la Idea",
+      "overallScore": "Puntuacion General",
+      "processingTime": "Tiempo de Procesamiento",
+      "recommendation": "Recomendacion",
+      "dimensionScores": "Puntuaciones por Dimension",
+      "keyStrengths": "Fortalezas Clave",
+      "keyConcerns": "Preocupaciones Clave",
+      "analyzedBy": "Analizado por",
+      "using": "Usando"
+    }
+  },
+  "extractions": {
+    "title": "Documentos Extraidos",
+    "loading": "Cargando extracciones...",
+    "noExtractions": "Sin extracciones aun",
+    "noExtractionsHint": "Cuando analices un PDF, el texto extraido se guardara aqui para reutilizarlo.",
+    "confirmDelete": "Estas seguro de que quieres eliminar esta extraccion?",
+    "deleteError": "Error al eliminar la extraccion",
+    "loadError": "Error al cargar las extracciones",
+    "columns": {
+      "date": "Fecha",
+      "document": "Documento",
+      "user": "Usuario",
+      "model": "Modelo",
+      "sector": "Sector",
+      "tokens": "Tokens",
+      "size": "Tamano",
+      "actions": "Acciones"
+    },
+    "spaceSaved": "{{percent}}% ahorrado"
+  },
+  "dimensions": {
+    "marketPotential": "Pot. Mercado",
+    "differentiatedApproach": "Enf. Dif.",
+    "competitiveAdvantage": "Vent. Comp.",
+    "differentiatingElement": "Elem. Dif.",
+    "technicalFeasibility": "Fact. Tec.",
+    "rapidImplementation": "Impl. Rap.",
+    "aiEnablement": "IA Hab.",
+    "barrierToEntry": "Barrera",
+    "scalability": "Escalab.",
+    "productFocused": "Producto",
+    "subscription": "Suscrip."
+  }
+}

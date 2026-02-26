@@ -2,6 +2,7 @@
  * Password Strength Indicator Component
  * Shows a colored bar indicating password strength
  */
+import { useTranslation } from 'react-i18next';
 
 interface PasswordStrengthProps {
   password: string;
@@ -12,12 +13,11 @@ type StrengthLevel = 'weak' | 'fair' | 'strong';
 interface StrengthResult {
   level: StrengthLevel;
   score: number;
-  label: string;
 }
 
 function calculateStrength(password: string): StrengthResult {
   if (!password) {
-    return { level: 'weak', score: 0, label: '' };
+    return { level: 'weak', score: 0 };
   }
 
   let score = 0;
@@ -35,24 +35,21 @@ function calculateStrength(password: string): StrengthResult {
 
   // Determine level based on score
   let level: StrengthLevel;
-  let label: string;
 
   if (score <= 2) {
     level = 'weak';
-    label = 'Weak';
   } else if (score <= 4) {
     level = 'fair';
-    label = 'Fair';
   } else {
     level = 'strong';
-    label = 'Strong';
   }
 
-  return { level, score: Math.min(score, 7), label };
+  return { level, score: Math.min(score, 7) };
 }
 
 export default function PasswordStrength({ password }: PasswordStrengthProps) {
-  const { level, score, label } = calculateStrength(password);
+  const { t } = useTranslation('auth');
+  const { level, score } = calculateStrength(password);
 
   if (!password) {
     return null;
@@ -70,6 +67,12 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
     strong: 'text-green-400',
   };
 
+  const labels = {
+    weak: t('passwordStrength.weak'),
+    fair: t('passwordStrength.fair'),
+    strong: t('passwordStrength.strong'),
+  };
+
   // Calculate width percentage (max score is 7)
   const widthPercent = (score / 7) * 100;
 
@@ -84,7 +87,7 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
       </div>
       {/* Label */}
       <p className={`text-xs mt-1 ${textClasses[level]}`}>
-        {label}
+        {labels[level]}
       </p>
     </div>
   );

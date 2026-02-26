@@ -4,10 +4,14 @@
  */
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import Spinner from '../components/Spinner';
+import LanguageSelector from '../components/LanguageSelector';
 
 export default function ResendVerificationPage() {
+  const { t } = useTranslation('auth');
+  const { t: tCommon } = useTranslation('common');
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -34,9 +38,9 @@ export default function ResendVerificationPage() {
       setStatus('error');
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { detail?: string } } };
-        setMessage(axiosError.response?.data?.detail || 'Failed to send verification email.');
+        setMessage(axiosError.response?.data?.detail || t('resend.defaultError'));
       } else {
-        setMessage('An error occurred. Please try again.');
+        setMessage(t('resend.genericError'));
       }
     }
   };
@@ -52,16 +56,19 @@ export default function ResendVerificationPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-white font-bold text-2xl">VB Ideation</span>
+            <span className="text-white font-bold text-2xl">{tCommon('appName')}</span>
           </Link>
         </div>
 
         {/* Resend Verification Card */}
         <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 shadow-xl">
-          <h1 className="text-2xl font-bold text-white mb-2">Resend verification email</h1>
-          <p className="text-gray-400 mb-6">
-            Enter your email address and we'll send you a new verification link.
-          </p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-white mb-1">{t('resend.title')}</h1>
+              <p className="text-gray-400">{t('resend.subtitle')}</p>
+            </div>
+            <LanguageSelector variant="dark" compact />
+          </div>
 
           {status === 'success' && (
             <div className="bg-green-900/50 border border-green-700 text-green-200 px-4 py-3 rounded-lg mb-6">
@@ -78,7 +85,7 @@ export default function ResendVerificationPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email address
+                {t('resend.email')}
               </label>
               <input
                 id="email"
@@ -87,7 +94,7 @@ export default function ResendVerificationPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@moven.pro"
+                placeholder={t('resend.emailPlaceholder')}
               />
             </div>
 
@@ -99,10 +106,10 @@ export default function ResendVerificationPage() {
               {status === 'loading' ? (
                 <>
                   <Spinner size="sm" />
-                  <span>Sending...</span>
+                  <span>{t('resend.submitting')}</span>
                 </>
               ) : (
-                'Send Verification Email'
+                t('resend.submit')
               )}
             </button>
           </form>
@@ -112,12 +119,12 @@ export default function ResendVerificationPage() {
         <div className="text-center mt-6 space-y-2">
           <p>
             <Link to="/login" className="text-blue-500 hover:text-blue-400 font-medium">
-              Back to Login
+              {t('resend.backToLogin')}
             </Link>
           </p>
           <p>
             <Link to="/" className="text-gray-500 hover:text-gray-400 text-sm">
-              Back to home
+              {tCommon('backToHome')}
             </Link>
           </p>
         </div>

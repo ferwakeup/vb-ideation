@@ -1,0 +1,46 @@
+{
+  "title": "Gestion de Usuarios",
+  "subtitle": "Gestiona usuarios registrados y su acceso",
+  "accessDenied": "Acceso Denegado",
+  "noPermission": "No tienes permiso para acceder a esta pagina.",
+  "stats": {
+    "totalUsers": "Total de Usuarios",
+    "active": "Activos",
+    "pending": "Pendientes",
+    "disabled": "Desactivados"
+  },
+  "status": {
+    "active": "Activo",
+    "pending": "Verificacion Pendiente",
+    "disabled": "Desactivado"
+  },
+  "roles": {
+    "admin": "Admin",
+    "user": "Usuario"
+  },
+  "table": {
+    "user": "Usuario",
+    "status": "Estado",
+    "role": "Rol",
+    "registered": "Registrado",
+    "actions": "Acciones"
+  },
+  "actions": {
+    "disable": "Desactivar",
+    "enable": "Activar",
+    "verify": "Verificar",
+    "delete": "Eliminar",
+    "disableUser": "Desactivar usuario",
+    "enableUser": "Activar usuario",
+    "manualVerify": "Verificar usuario manualmente",
+    "deleteUser": "Eliminar usuario"
+  },
+  "loading": "Cargando usuarios...",
+  "noUsers": "No se encontraron usuarios",
+  "confirmDelete": "Estas seguro de que quieres eliminar este usuario? Esta accion no se puede deshacer.",
+  "errors": {
+    "loadFailed": "Error al cargar usuarios",
+    "updateFailed": "Error al actualizar usuario",
+    "deleteFailed": "Error al eliminar usuario"
+  }
+}

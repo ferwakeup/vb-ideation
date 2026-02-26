@@ -3,8 +3,10 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './i18n';
 import { HistoryProvider } from './contexts/HistoryContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { AnalysisProvider } from './contexts/AnalysisContext';
 import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -32,30 +34,32 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <HistoryProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/verify-email" element={<VerifyEmailPage />} />
-              <Route path="/resend-verification" element={<ResendVerificationPage />} />
+          <AnalysisProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/resend-verification" element={<ResendVerificationPage />} />
 
-              {/* Protected routes */}
-              <Route
-                path="/app"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<IdeaScorer />} />
-                <Route path="history" element={<History />} />
-                <Route path="users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
+                {/* Protected routes */}
+                <Route
+                  path="/app"
+                  element={
+                    <ProtectedRoute>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<IdeaScorer />} />
+                  <Route path="history" element={<History />} />
+                  <Route path="users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </AnalysisProvider>
         </HistoryProvider>
       </AuthProvider>
     </QueryClientProvider>

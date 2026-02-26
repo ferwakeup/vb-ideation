@@ -1,0 +1,40 @@
+{
+  "appName": "VB Ideation",
+  "adminPanel": "Admin Panel",
+  "nav": {
+    "ventureScorer": "Venture Scorer",
+    "history": "History",
+    "users": "Users",
+    "logout": "Logout"
+  },
+  "navDescriptions": {
+    "ventureScorer": "Analyze business ideas with AI",
+    "history": "View past analyses",
+    "users": "Manage users"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "close": "Close",
+    "use": "Use",
+    "view": "View",
+    "enable": "Enable",
+    "disable": "Disable",
+    "verify": "Verify"
+  },
+  "status": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success!"
+  },
+  "sidebar": {
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar"
+  },
+  "user": "User",
+  "you": "(You)",
+  "backToHome": "Back to home"
+}

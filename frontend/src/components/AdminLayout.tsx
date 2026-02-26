@@ -4,54 +4,55 @@
  */
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useAnalysis } from '../contexts/AnalysisContext';
+import LanguageSelector from './LanguageSelector';
 
 interface NavItem {
-  name: string;
+  key: string;
   href: string;
   icon: React.ReactNode;
-  description: string;
   adminOnly?: boolean;
   end?: boolean;
 }
 
-const navigation: NavItem[] = [
+const navigationConfig: NavItem[] = [
   {
-    name: 'Venture Scorer',
+    key: 'ventureScorer',
     href: '/app',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
-    description: 'Analyze business ideas with AI',
     end: true,
   },
   {
-    name: 'History',
+    key: 'history',
     href: '/app/history',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    description: 'View past analyses',
   },
   {
-    name: 'Users',
+    key: 'users',
     href: '/app/users',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
     ),
-    description: 'Manage users',
     adminOnly: true,
   },
 ];
 
 export default function AdminLayout() {
+  const { t } = useTranslation('common');
   const { user, logout } = useAuth();
+  const { isAnalyzing, progress } = useAnalysis();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -77,7 +78,7 @@ export default function AdminLayout() {
     <button
       onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
       className={`p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors ${className}`}
-      title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      title={sidebarCollapsed ? t('sidebar.expandSidebar') : t('sidebar.collapseSidebar')}
     >
       <svg
         className={`w-5 h-5 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`}
@@ -116,9 +117,9 @@ export default function AdminLayout() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="font-bold text-white">VB Ideation</span>
+          <span className="font-bold text-white">{t('appName')}</span>
         </div>
-        <div className="w-10" /> {/* Spacer for centering */}
+        <LanguageSelector variant="dark" compact />
       </div>
 
       {/* Sidebar */}
@@ -143,8 +144,8 @@ export default function AdminLayout() {
               </div>
               {!sidebarCollapsed && (
                 <div className="lg:block">
-                  <h1 className="font-bold text-lg">VB Ideation</h1>
-                  <p className="text-xs text-gray-400">Admin Panel</p>
+                  <h1 className="font-bold text-lg">{t('appName')}</h1>
+                  <p className="text-xs text-gray-400">{t('adminPanel')}</p>
                 </div>
               )}
             </div>
@@ -160,45 +161,83 @@ export default function AdminLayout() {
           </div>
         </div>
 
+        {/* Language Selector - Desktop */}
+        {!sidebarCollapsed && (
+          <div className="hidden lg:block px-4 py-3 border-b border-gray-800">
+            <LanguageSelector variant="dark" />
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className={`flex-1 p-4 ${sidebarCollapsed ? 'lg:p-2' : ''}`}>
           <ul className="space-y-2">
-            {navigation
+            {navigationConfig
               .filter((item) => !item.adminOnly || user?.is_admin)
-              .map((item) => (
-              <li key={item.name}>
-                <NavLink
-                  to={item.href}
-                  end={item.end}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''
-                    } ${
-                      isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`
-                  }
-                  title={sidebarCollapsed ? item.name : undefined}
-                >
-                  <div className="flex-shrink-0">{item.icon}</div>
-                  {!sidebarCollapsed && (
-                    <div className="lg:block">
-                      <span className="font-medium">{item.name}</span>
-                      <p className="text-xs opacity-70">{item.description}</p>
-                    </div>
-                  )}
-                  {sidebarCollapsed && (
-                    <div className="lg:hidden">
-                      <span className="font-medium">{item.name}</span>
-                      <p className="text-xs opacity-70">{item.description}</p>
-                    </div>
-                  )}
-                </NavLink>
-              </li>
-            ))}
+              .map((item) => {
+                const name = t(`nav.${item.key}`);
+                const description = t(`navDescriptions.${item.key}`);
+                return (
+                  <li key={item.key}>
+                    <NavLink
+                      to={item.href}
+                      end={item.end}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                          sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''
+                        } ${
+                          isActive
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        }`
+                      }
+                      title={sidebarCollapsed ? name : undefined}
+                    >
+                      <div className="flex-shrink-0">{item.icon}</div>
+                      {!sidebarCollapsed && (
+                        <div className="lg:block">
+                          <span className="font-medium">{name}</span>
+                          <p className="text-xs opacity-70">{description}</p>
+                        </div>
+                      )}
+                      {sidebarCollapsed && (
+                        <div className="lg:hidden">
+                          <span className="font-medium">{name}</span>
+                          <p className="text-xs opacity-70">{description}</p>
+                        </div>
+                      )}
+                    </NavLink>
+                  </li>
+                );
+              })}
           </ul>
+
+          {/* Analysis Progress Indicator */}
+          {isAnalyzing && progress && (
+            <div className={`mt-4 ${sidebarCollapsed ? 'lg:mx-1' : 'mx-2'}`}>
+              {sidebarCollapsed ? (
+                // Collapsed: spinner only (desktop)
+                <div className="hidden lg:flex justify-center">
+                  <div className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                </div>
+              ) : null}
+              {/* Expanded: progress bar with step info */}
+              <div className={`bg-gray-800 rounded-lg p-3 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
+                <div className="text-xs text-gray-300 truncate mb-1">
+                  {progress.title}
+                </div>
+                <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-300"
+                    style={{ width: `${(progress.step / progress.total_steps) * 100}%` }}
+                  />
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Step {progress.step}/{progress.total_steps}
+                </div>
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Collapse Toggle - Desktop Only */}
@@ -219,7 +258,7 @@ export default function AdminLayout() {
               <button
                 onClick={handleLogout}
                 className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                title="Logout"
+                title={t('nav.logout')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -237,7 +276,7 @@ export default function AdminLayout() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-300 truncate">
-                  {user?.full_name || 'User'}
+                  {user?.full_name || t('user')}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
                   {user?.email || ''}
@@ -247,7 +286,7 @@ export default function AdminLayout() {
             <button
               onClick={handleLogout}
               className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
-              title="Logout"
+              title={t('nav.logout')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

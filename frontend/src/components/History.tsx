@@ -4,6 +4,7 @@
  * and a tab for extracted documents
  */
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useHistory, type HistoryEntry } from '../contexts/HistoryContext';
 import Extractions from './Extractions';
 
@@ -28,6 +29,8 @@ const DIMENSION_COLUMNS = [
 ];
 
 export default function History() {
+  const { t } = useTranslation('scorer');
+  const { t: tCommon } = useTranslation('common');
   const { history, removeEntry, clearHistory } = useHistory();
   const [activeTab, setActiveTab] = useState<TabType>('analyses');
   const [sortField, setSortField] = useState<SortField>('timestamp');
@@ -164,9 +167,9 @@ export default function History() {
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">History</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('history.title')}</h1>
           <p className="text-gray-600 mt-1">
-            View your analysis history and extracted documents
+            {t('history.subtitle')}
           </p>
         </div>
 
@@ -185,7 +188,7 @@ export default function History() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                Analysis History
+                {t('history.tabs.analyses')}
                 <span className="bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
                   {history.length}
                 </span>
@@ -203,7 +206,7 @@ export default function History() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Extracted Documents
+                {t('history.tabs.extractions')}
               </div>
             </button>
           </nav>
@@ -217,12 +220,12 @@ export default function History() {
             {/* Analysis History Header */}
             <div className="mb-4 flex items-center justify-between">
               <p className="text-gray-600">
-                {history.length} document{history.length !== 1 ? 's' : ''} analyzed
+                {t('history.documentsAnalyzed', { count: history.length })}
               </p>
               {history.length > 0 && (
                 <button
                   onClick={() => {
-                    if (confirm('Are you sure you want to clear all history?')) {
+                    if (confirm(t('history.confirmClear'))) {
                       clearHistory();
                     }
                   }}
@@ -231,7 +234,7 @@ export default function History() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Clear History
+                  {t('history.clearHistory')}
                 </button>
               )}
             </div>
@@ -242,9 +245,9 @@ export default function History() {
             <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No analyses yet</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('history.noAnalyses')}</h3>
             <p className="text-gray-500 mb-4">
-              Start by analyzing a PDF document in the Venture Scorer section.
+              {t('history.noAnalysesHint')}
             </p>
             <a
               href="/"
@@ -253,7 +256,7 @@ export default function History() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Start Analysis
+              {t('history.startAnalysis')}
             </a>
           </div>
         )}
@@ -271,7 +274,7 @@ export default function History() {
                       onClick={() => handleSort('timestamp')}
                     >
                       <div className="flex items-center gap-1">
-                        Date
+                        {t('history.columns.date')}
                         <SortIndicator field="timestamp" />
                       </div>
                     </th>
@@ -280,7 +283,7 @@ export default function History() {
                       onClick={() => handleSort('fileName')}
                     >
                       <div className="flex items-center gap-1">
-                        Document
+                        {t('history.columns.document')}
                         <SortIndicator field="fileName" />
                       </div>
                     </th>
@@ -289,7 +292,7 @@ export default function History() {
                       onClick={() => handleSort('user')}
                     >
                       <div className="flex items-center gap-1">
-                        User
+                        {t('history.columns.user')}
                         <SortIndicator field="user" />
                       </div>
                     </th>
@@ -298,7 +301,7 @@ export default function History() {
                       onClick={() => handleSort('sector')}
                     >
                       <div className="flex items-center gap-1">
-                        Sector
+                        {t('history.columns.sector')}
                         <SortIndicator field="sector" />
                       </div>
                     </th>
@@ -307,7 +310,7 @@ export default function History() {
                       onClick={() => handleSort('overallScore')}
                     >
                       <div className="flex items-center justify-center gap-1">
-                        Overall
+                        {t('history.columns.overall')}
                         <SortIndicator field="overallScore" />
                       </div>
                     </th>
@@ -316,7 +319,7 @@ export default function History() {
                       onClick={() => handleSort('recommendation')}
                     >
                       <div className="flex items-center gap-1">
-                        Recommendation
+                        {t('history.columns.recommendation')}
                         <SortIndicator field="recommendation" />
                       </div>
                     </th>
@@ -338,7 +341,7 @@ export default function History() {
 
                     {/* Actions column */}
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      {t('history.columns.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -397,7 +400,7 @@ export default function History() {
                           <button
                             onClick={() => setSelectedEntry(entry)}
                             className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="View details"
+                            title={t('history.viewDetails')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -406,12 +409,12 @@ export default function History() {
                           </button>
                           <button
                             onClick={() => {
-                              if (confirm('Remove this entry from history?')) {
+                              if (confirm(t('history.confirmRemove'))) {
                                 removeEntry(entry.id);
                               }
                             }}
                             className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Delete"
+                            title={tCommon('actions.delete')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -440,6 +443,8 @@ export default function History() {
 
 // Detail Modal Component
 function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => void }) {
+  const { t } = useTranslation('scorer');
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-auto">
@@ -448,7 +453,7 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
           <div>
             <h2 className="text-xl font-bold text-gray-800">{entry.fileName}</h2>
             <p className="text-sm text-gray-500">
-              Analyzed on {new Date(entry.timestamp).toLocaleString()}
+              {t('history.modal.analyzedOn')} {new Date(entry.timestamp).toLocaleString()}
             </p>
           </div>
           <button
@@ -465,7 +470,7 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
         <div className="p-6 space-y-6">
           {/* Summary */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Idea Summary</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">{t('history.modal.ideaSummary')}</h3>
             <p className="text-gray-700">{entry.ideaSummary}</p>
           </div>
 
@@ -473,21 +478,21 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-blue-50 rounded-lg p-4 text-center">
               <div className="text-3xl font-bold text-blue-600">{entry.overallScore.toFixed(1)}</div>
-              <div className="text-sm text-blue-600">Overall Score</div>
+              <div className="text-sm text-blue-600">{t('history.modal.overallScore')}</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <div className="text-lg font-semibold text-gray-800 capitalize">{entry.sector}</div>
-              <div className="text-sm text-gray-500">Sector</div>
+              <div className="text-sm text-gray-500">{t('history.columns.sector')}</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <div className="text-lg font-semibold text-gray-800">{entry.processingTime.toFixed(1)}s</div>
-              <div className="text-sm text-gray-500">Processing Time</div>
+              <div className="text-sm text-gray-500">{t('history.modal.processingTime')}</div>
             </div>
           </div>
 
           {/* Recommendation */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Recommendation</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">{t('history.modal.recommendation')}</h3>
             <span className={`px-3 py-1.5 text-sm font-medium rounded ${
               entry.recommendation.includes('Strong') ? 'bg-green-100 text-green-800' :
               entry.recommendation.includes('Consider') ? 'bg-yellow-100 text-yellow-800' :
@@ -500,7 +505,7 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
 
           {/* Dimension Scores */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Dimension Scores</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('history.modal.dimensionScores')}</h3>
             <div className="grid grid-cols-2 gap-2">
               {entry.dimensionScores.map((dim, idx) => (
                 <div key={idx} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
@@ -523,7 +528,7 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
           {/* Strengths & Concerns */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-green-50 rounded-lg p-4">
-              <h4 className="font-semibold text-green-800 mb-2">Key Strengths</h4>
+              <h4 className="font-semibold text-green-800 mb-2">{t('history.modal.keyStrengths')}</h4>
               <ul className="space-y-1">
                 {entry.keyStrengths.map((s, idx) => (
                   <li key={idx} className="text-sm text-gray-700 flex items-start">
@@ -534,7 +539,7 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
               </ul>
             </div>
             <div className="bg-red-50 rounded-lg p-4">
-              <h4 className="font-semibold text-red-800 mb-2">Key Concerns</h4>
+              <h4 className="font-semibold text-red-800 mb-2">{t('history.modal.keyConcerns')}</h4>
               <ul className="space-y-1">
                 {entry.keyConcerns.map((c, idx) => (
                   <li key={idx} className="text-sm text-gray-700 flex items-start">
@@ -550,11 +555,11 @@ function DetailModal({ entry, onClose }: { entry: HistoryEntry; onClose: () => v
           <div className="text-center text-sm text-gray-500 space-y-1">
             {entry.user && (
               <div>
-                Analyzed by <span className="font-medium">{entry.user.fullName}</span> ({entry.user.email})
+                {t('history.modal.analyzedBy')} <span className="font-medium">{entry.user.fullName}</span> ({entry.user.email})
               </div>
             )}
             <div>
-              Using <span className="font-medium">{entry.modelUsed}</span>
+              {t('history.modal.using')} <span className="font-medium">{entry.modelUsed}</span>
             </div>
           </div>
         </div>
