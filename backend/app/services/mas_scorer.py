@@ -228,7 +228,9 @@ class MASScorer:
             "processing_time_seconds": round(elapsed, 2),
             "pdf_metadata": pdf_metadata,
             "generated_ideas_count": len(parsed_ideas),
-            "evaluated_idea_index": idea_index
+            "evaluated_idea_index": idea_index,
+            # Include extracted text for saving to database
+            "extracted_text": extraction_result["raw_output"]
         }
 
         logger.info(

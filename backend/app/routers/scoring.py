@@ -12,6 +12,7 @@ import logging
 import tempfile
 import shutil
 import asyncio
+import hashlib
 from queue import Queue
 from threading import Thread
 
@@ -234,7 +235,8 @@ async def score_pdf_stream(
     provider: str = Form(default="anthropic", description="LLM provider"),
     model: Optional[str] = Form(default=None, description="Model name"),
     use_checkpoints: bool = Form(default=True, description="Use checkpoint system"),
-    settings: Settings = Depends(get_settings)
+    settings: Settings = Depends(get_settings),
+    db: Session = Depends(get_db)
 ):
     """
     Score a business idea from a PDF file with real-time progress streaming (SSE).
@@ -261,10 +263,15 @@ async def score_pdf_stream(
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        # Compute file hash for deduplication
+        with open(temp_path, "rb") as f:
+            file_hash = hashlib.sha256(f.read()).hexdigest()
+
         logger.info(f"Processing PDF (streaming): {file.filename} (sector: {sector}, provider: {provider})")
 
         # Create MAS scorer
         mas_scorer = get_mas_scorer(provider, model, use_checkpoints, settings)
+        model_used = model or mas_scorer.llm_factory.model
 
         async def event_generator() -> AsyncGenerator[str, None]:
             """Generate SSE events for progress and final result."""
@@ -331,6 +338,35 @@ async def score_pdf_stream(
                                 elif result_holder["result"]:
                                     # Build final result
                                     result = result_holder["result"]
+
+                                    # Save extraction to database for reuse
+                                    try:
+                                        extracted_text = result.get("extracted_text", "")
+                                        if extracted_text:
+                                            # Check if extraction already exists
+                                            existing = db.query(Extraction).filter(
+                                                Extraction.file_hash == file_hash,
+                                                Extraction.model_used == model_used
+                                            ).first()
+
+                                            if not existing:
+                                                new_extraction = Extraction(
+                                                    file_name=file.filename,
+                                                    file_hash=file_hash,
+                                                    extracted_text=extracted_text,
+                                                    model_used=model_used,
+                                                    sector=sector,
+                                                    token_count=len(extracted_text) // 4  # Rough estimate
+                                                )
+                                                db.add(new_extraction)
+                                                db.commit()
+                                                logger.info(f"Saved extraction for {file.filename} (hash: {file_hash[:8]}...)")
+                                            else:
+                                                logger.info(f"Extraction already exists for {file.filename}")
+                                    except Exception as e:
+                                        logger.error(f"Failed to save extraction: {e}")
+                                        # Don't fail the whole request if extraction save fails
+
                                     final_result = {
                                         "idea_summary": result["idea_summary"],
                                         "source": file.filename,
