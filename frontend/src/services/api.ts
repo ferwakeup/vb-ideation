@@ -80,30 +80,18 @@ export const api = {
 
         const decoder = new TextDecoder();
         let buffer = '';
+        let eventType = '';
+        let eventData = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          // Process complete SSE events
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line in buffer
-
-          let eventType = '';
-          let eventData = '';
-
+        const processLines = (lines: string[]) => {
           for (const line of lines) {
             if (line.startsWith('event: ')) {
               eventType = line.slice(7).trim();
             } else if (line.startsWith('data: ')) {
               eventData = line.slice(6);
             } else if (line === '' && eventData) {
-              // Empty line marks end of an event
               try {
                 const parsed = JSON.parse(eventData);
-
                 if (eventType === 'init') {
                   onInit?.(parsed as InitEvent);
                 } else if (eventType === 'progress') {
@@ -116,11 +104,29 @@ export const api = {
               } catch (e) {
                 console.error('Failed to parse SSE data:', e);
               }
-
               eventType = '';
               eventData = '';
             }
           }
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            // Process any remaining data in buffer when stream ends
+            if (buffer.trim()) {
+              const finalLines = buffer.split('\n');
+              finalLines.push(''); // Add empty line to trigger final event processing
+              processLines(finalLines);
+            }
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          processLines(lines);
         }
       })
       .catch((error) => {
@@ -173,30 +179,18 @@ export const api = {
 
         const decoder = new TextDecoder();
         let buffer = '';
+        let eventType = '';
+        let eventData = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          // Process complete SSE events
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line in buffer
-
-          let eventType = '';
-          let eventData = '';
-
+        const processLines = (lines: string[]) => {
           for (const line of lines) {
             if (line.startsWith('event: ')) {
               eventType = line.slice(7).trim();
             } else if (line.startsWith('data: ')) {
               eventData = line.slice(6);
             } else if (line === '' && eventData) {
-              // Empty line marks end of an event
               try {
                 const parsed = JSON.parse(eventData);
-
                 if (eventType === 'init') {
                   onInit?.(parsed as InitEvent);
                 } else if (eventType === 'progress') {
@@ -209,11 +203,29 @@ export const api = {
               } catch (e) {
                 console.error('Failed to parse SSE data:', e);
               }
-
               eventType = '';
               eventData = '';
             }
           }
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            // Process any remaining data in buffer when stream ends
+            if (buffer.trim()) {
+              const finalLines = buffer.split('\n');
+              finalLines.push(''); // Add empty line to trigger final event processing
+              processLines(finalLines);
+            }
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          processLines(lines);
         }
       })
       .catch((error) => {
