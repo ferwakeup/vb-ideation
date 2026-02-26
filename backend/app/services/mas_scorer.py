@@ -79,7 +79,8 @@ class MASScorer:
         sector: str,
         num_ideas: int = 3,
         idea_index: int = 0,
-        progress_callback: Optional[Callable[[Dict], None]] = None
+        progress_callback: Optional[Callable[[Dict], None]] = None,
+        extraction_callback: Optional[Callable[[str], None]] = None
     ) -> Dict:
         """
         Score a business idea from a PDF document.
@@ -90,6 +91,7 @@ class MASScorer:
             num_ideas: Number of ideas to generate (default: 3)
             idea_index: Which generated idea to evaluate (default: 0 = first)
             progress_callback: Optional callback for progress updates
+            extraction_callback: Optional callback called with extracted text after Agent 1 completes
 
         Returns:
             Complete scoring result dict
@@ -131,6 +133,13 @@ class MASScorer:
         agent1 = Agent1Extraction(self.llm_factory, checkpoint_manager)
         extraction_result = agent1.extract(document_content, sector)
         progress.complete_extraction()
+
+        # Call extraction callback immediately after Agent 1 completes
+        if extraction_callback and extraction_result.get("raw_output"):
+            try:
+                extraction_callback(extraction_result["raw_output"])
+            except Exception as e:
+                logger.error(f"Extraction callback error: {e}")
 
         # ==== AGENT 2: Idea Generation ====
         logger.info("Running Agent 2: Idea Generation")
@@ -228,9 +237,7 @@ class MASScorer:
             "processing_time_seconds": round(elapsed, 2),
             "pdf_metadata": pdf_metadata,
             "generated_ideas_count": len(parsed_ideas),
-            "evaluated_idea_index": idea_index,
-            # Include extracted text for saving to database
-            "extracted_text": extraction_result["raw_output"]
+            "evaluated_idea_index": idea_index
         }
 
         logger.info(

@@ -14,7 +14,7 @@ class Extraction(Base):
     __tablename__ = "extractions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Nullable for anonymous extractions
     file_name = Column(String, nullable=False)
     file_hash = Column(String(64), nullable=False, index=True)  # SHA-256 hash of file content
     model_used = Column(String, nullable=False)

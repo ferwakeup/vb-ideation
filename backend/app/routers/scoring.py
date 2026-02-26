@@ -294,6 +294,40 @@ async def score_pdf_stream(
                 """Callback to push progress events to the queue."""
                 progress_queue.put(("progress", event))
 
+            def extraction_callback(extracted_text: str):
+                """Callback to save extraction immediately after Agent 1 completes."""
+                try:
+                    # Check if extraction already exists
+                    existing = db.query(Extraction).filter(
+                        Extraction.file_hash == file_hash,
+                        Extraction.model_used == model_used
+                    ).first()
+
+                    if not existing:
+                        # Compress the text
+                        compressed, original_size, compressed_size = Extraction.compress_text(extracted_text)
+
+                        new_extraction = Extraction(
+                            file_name=file.filename,
+                            file_hash=file_hash,
+                            compressed_text=compressed,
+                            original_size=original_size,
+                            compressed_size=compressed_size,
+                            model_used=model_used,
+                            sector=sector,
+                            token_count=len(extracted_text) // 4,
+                            user_id=None  # Anonymous extraction
+                        )
+                        db.add(new_extraction)
+                        db.commit()
+                        compression_pct = (1 - compressed_size / original_size) * 100
+                        logger.info(f"Saved extraction for {file.filename} (hash: {file_hash[:8]}..., compressed {compression_pct:.1f}%)")
+                    else:
+                        logger.info(f"Extraction already exists for {file.filename}")
+                except Exception as e:
+                    logger.error(f"Failed to save extraction after Agent 1: {e}")
+                    db.rollback()
+
             def run_scoring():
                 """Run scoring in a separate thread."""
                 try:
@@ -302,7 +336,8 @@ async def score_pdf_stream(
                         sector=sector,
                         num_ideas=num_ideas,
                         idea_index=idea_index,
-                        progress_callback=progress_callback
+                        progress_callback=progress_callback,
+                        extraction_callback=extraction_callback
                     )
                     result_holder["result"] = result
                 except Exception as e:
@@ -338,34 +373,6 @@ async def score_pdf_stream(
                                 elif result_holder["result"]:
                                     # Build final result
                                     result = result_holder["result"]
-
-                                    # Save extraction to database for reuse
-                                    try:
-                                        extracted_text = result.get("extracted_text", "")
-                                        if extracted_text:
-                                            # Check if extraction already exists
-                                            existing = db.query(Extraction).filter(
-                                                Extraction.file_hash == file_hash,
-                                                Extraction.model_used == model_used
-                                            ).first()
-
-                                            if not existing:
-                                                new_extraction = Extraction(
-                                                    file_name=file.filename,
-                                                    file_hash=file_hash,
-                                                    extracted_text=extracted_text,
-                                                    model_used=model_used,
-                                                    sector=sector,
-                                                    token_count=len(extracted_text) // 4  # Rough estimate
-                                                )
-                                                db.add(new_extraction)
-                                                db.commit()
-                                                logger.info(f"Saved extraction for {file.filename} (hash: {file_hash[:8]}...)")
-                                            else:
-                                                logger.info(f"Extraction already exists for {file.filename}")
-                                    except Exception as e:
-                                        logger.error(f"Failed to save extraction: {e}")
-                                        # Don't fail the whole request if extraction save fails
 
                                     final_result = {
                                         "idea_summary": result["idea_summary"],
