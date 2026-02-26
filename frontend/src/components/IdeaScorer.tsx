@@ -36,9 +36,7 @@ const PDF_PROVIDER_OPTIONS = [
     value: 'google',
     label: 'Google Gemini',
     models: [
-      { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', description: 'Very fast, excellent value', recommended: true, inputPrice: 0.1, outputPrice: 0.4 },
-      { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', description: 'High quality, 2M context', inputPrice: 1.25, outputPrice: 5 },
-      { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Fast & cheap', inputPrice: 0.075, outputPrice: 0.3 },
+      { value: 'gemini-2.5-flash-preview-05-20', label: 'Gemini 2.5 Flash', description: 'Very fast, excellent value', recommended: true, inputPrice: 0.15, outputPrice: 0.6 },
     ]
   },
   {
