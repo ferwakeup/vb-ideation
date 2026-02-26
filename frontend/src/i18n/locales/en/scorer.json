@@ -154,5 +154,32 @@
     "scalability": "Scalability",
     "productFocused": "Product",
     "subscription": "Subscription"
+  },
+  "legend": {
+    "title": "Scoring Guide",
+    "showLegend": "Show scoring guide",
+    "hideLegend": "Hide scoring guide",
+    "scores": {
+      "title": "Score Ranges",
+      "excellent": "Excellent (8-10)",
+      "excellentDesc": "Strong performance, highly favorable",
+      "good": "Good (6-8)",
+      "goodDesc": "Above average, positive indicators",
+      "average": "Average (4-6)",
+      "averageDesc": "Moderate performance, room for improvement",
+      "poor": "Poor (0-4)",
+      "poorDesc": "Below expectations, significant concerns"
+    },
+    "recommendations": {
+      "title": "Recommendations",
+      "strongInvest": "Strong Invest",
+      "strongInvestDesc": "Exceptional opportunity with strong fundamentals",
+      "consider": "Consider Investing",
+      "considerDesc": "Promising with some areas to monitor",
+      "research": "More Research Needed",
+      "researchDesc": "Potential exists but requires deeper analysis",
+      "pass": "Pass",
+      "passDesc": "Does not meet investment criteria"
+    }
   }
 }

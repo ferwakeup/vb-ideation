@@ -154,5 +154,32 @@
     "scalability": "Escalab.",
     "productFocused": "Producto",
     "subscription": "Suscrip."
+  },
+  "legend": {
+    "title": "Guia de Puntuacion",
+    "showLegend": "Mostrar guia de puntuacion",
+    "hideLegend": "Ocultar guia de puntuacion",
+    "scores": {
+      "title": "Rangos de Puntuacion",
+      "excellent": "Excelente (8-10)",
+      "excellentDesc": "Rendimiento solido, muy favorable",
+      "good": "Bueno (6-8)",
+      "goodDesc": "Por encima del promedio, indicadores positivos",
+      "average": "Promedio (4-6)",
+      "averageDesc": "Rendimiento moderado, margen de mejora",
+      "poor": "Bajo (0-4)",
+      "poorDesc": "Por debajo de expectativas, preocupaciones significativas"
+    },
+    "recommendations": {
+      "title": "Recomendaciones",
+      "strongInvest": "Invertir Fuertemente",
+      "strongInvestDesc": "Oportunidad excepcional con fundamentos solidos",
+      "consider": "Considerar Inversion",
+      "considerDesc": "Prometedor con algunas areas a monitorear",
+      "research": "Mas Investigacion Necesaria",
+      "researchDesc": "Existe potencial pero requiere analisis mas profundo",
+      "pass": "Pasar",
+      "passDesc": "No cumple con los criterios de inversion"
+    }
   }
 }

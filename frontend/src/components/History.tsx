@@ -36,6 +36,7 @@ export default function History() {
   const [sortField, setSortField] = useState<SortField>('timestamp');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
+  const [showLegend, setShowLegend] = useState(false);
 
   // Get dimension score from entry
   const getDimensionScore = (entry: HistoryEntry, dimensionKey: string): number | null => {
@@ -222,22 +223,107 @@ export default function History() {
               <p className="text-gray-600">
                 {t('history.documentsAnalyzed', { count: history.length })}
               </p>
-              {history.length > 0 && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    if (confirm(t('history.confirmClear'))) {
-                      clearHistory();
-                    }
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  onClick={() => setShowLegend(!showLegend)}
+                  className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {t('history.clearHistory')}
+                  {showLegend ? t('legend.hideLegend') : t('legend.showLegend')}
                 </button>
-              )}
+                {history.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (confirm(t('history.confirmClear'))) {
+                        clearHistory();
+                      }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    {t('history.clearHistory')}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Scoring Legend */}
+            {showLegend && (
+              <div className="mb-6 bg-white rounded-lg shadow-md p-4 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('legend.title')}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Score Ranges */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">{t('legend.scores.title')}</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="w-16 text-sm font-semibold text-green-600">8 - 10</span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-800">{t('legend.scores.excellent')}</span>
+                          <p className="text-xs text-gray-500">{t('legend.scores.excellentDesc')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="w-16 text-sm font-semibold text-blue-600">6 - 8</span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-800">{t('legend.scores.good')}</span>
+                          <p className="text-xs text-gray-500">{t('legend.scores.goodDesc')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="w-16 text-sm font-semibold text-yellow-600">4 - 6</span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-800">{t('legend.scores.average')}</span>
+                          <p className="text-xs text-gray-500">{t('legend.scores.averageDesc')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="w-16 text-sm font-semibold text-red-600">0 - 4</span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-800">{t('legend.scores.poor')}</span>
+                          <p className="text-xs text-gray-500">{t('legend.scores.poorDesc')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">{t('legend.recommendations.title')}</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded whitespace-nowrap">
+                          {t('legend.recommendations.strongInvest')}
+                        </span>
+                        <p className="text-xs text-gray-500">{t('legend.recommendations.strongInvestDesc')}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded whitespace-nowrap">
+                          {t('legend.recommendations.consider')}
+                        </span>
+                        <p className="text-xs text-gray-500">{t('legend.recommendations.considerDesc')}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded whitespace-nowrap">
+                          {t('legend.recommendations.research')}
+                        </span>
+                        <p className="text-xs text-gray-500">{t('legend.recommendations.researchDesc')}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded whitespace-nowrap">
+                          {t('legend.recommendations.pass')}
+                        </span>
+                        <p className="text-xs text-gray-500">{t('legend.recommendations.passDesc')}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
         {/* Empty State */}
         {history.length === 0 && (
