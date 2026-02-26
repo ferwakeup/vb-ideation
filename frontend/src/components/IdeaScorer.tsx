@@ -14,17 +14,44 @@ import Extractions from './Extractions';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalysis } from '../contexts/AnalysisContext';
 
+// Provider options for PDF analysis
+const PDF_PROVIDER_OPTIONS = [
+  {
+    value: 'anthropic',
+    label: 'Anthropic Claude',
+    models: [
+      { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4', description: 'Best balance of quality & cost', recommended: true },
+      { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', description: 'Fast & budget-friendly' },
+    ]
+  },
+  {
+    value: 'openai',
+    label: 'OpenAI',
+    models: [
+      { value: 'gpt-4o', label: 'GPT-4o', description: 'High quality, moderate cost', recommended: true },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Fast & cheap' },
+    ]
+  },
+  {
+    value: 'groq',
+    label: 'Groq (Free)',
+    models: [
+      { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B', description: 'Free, fast, good quality', recommended: true },
+    ]
+  },
+];
+
 const MODEL_OPTIONS = [
   // OpenAI Models
-  { value: 'gpt-4o', label: '🤖 GPT-4o (OpenAI)', provider: 'OpenAI', description: 'Best quality, moderate cost (~$0.10-0.20)' },
-  { value: 'gpt-4o-mini', label: '🤖 GPT-4o Mini (OpenAI)', provider: 'OpenAI', description: 'Fast & cheap (~$0.01-0.02)' },
-  { value: 'gpt-4-turbo', label: '🤖 GPT-4 Turbo (OpenAI)', provider: 'OpenAI', description: 'High quality (~$0.30-0.50)' },
-  { value: 'gpt-4', label: '🤖 GPT-4 (OpenAI)', provider: 'OpenAI', description: 'Highest quality (~$0.60-1.00)' },
+  { value: 'gpt-4o', label: 'GPT-4o (OpenAI)', provider: 'OpenAI', description: 'Best quality, moderate cost (~$0.10-0.20)' },
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini (OpenAI)', provider: 'OpenAI', description: 'Fast & cheap (~$0.01-0.02)' },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo (OpenAI)', provider: 'OpenAI', description: 'High quality (~$0.30-0.50)' },
+  { value: 'gpt-4', label: 'GPT-4 (OpenAI)', provider: 'OpenAI', description: 'Highest quality (~$0.60-1.00)' },
   // Google Gemini Models
-  { value: 'gemini-2.5-pro', label: '✨ Gemini 2.5 Pro (Google)', provider: 'Google', description: 'Excellent quality (~$0.05-0.15)' },
-  { value: 'gemini-2.5-flash', label: '✨ Gemini 2.5 Flash (Google)', provider: 'Google', description: 'Very fast & cheap (~$0.005-0.01)' },
-  { value: 'gemini-flash-latest', label: '✨ Gemini Flash Latest (Google)', provider: 'Google', description: 'Latest flash model (~$0.005-0.01)' },
-  { value: 'gemini-pro-latest', label: '✨ Gemini Pro Latest (Google)', provider: 'Google', description: 'Latest pro model (~$0.05-0.15)' },
+  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Google)', provider: 'Google', description: 'Excellent quality (~$0.05-0.15)' },
+  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Google)', provider: 'Google', description: 'Very fast & cheap (~$0.005-0.01)' },
+  { value: 'gemini-flash-latest', label: 'Gemini Flash Latest (Google)', provider: 'Google', description: 'Latest flash model (~$0.005-0.01)' },
+  { value: 'gemini-pro-latest', label: 'Gemini Pro Latest (Google)', provider: 'Google', description: 'Latest pro model (~$0.05-0.15)' },
 ];
 
 const SECTOR_OPTIONS = [
@@ -71,7 +98,8 @@ export default function IdeaScorer() {
   // PDF mode state - only input selection, not analysis state
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [sector, setSector] = useState('mobility');
-  const [pdfProvider] = useState('groq');
+  const [pdfProvider, setPdfProvider] = useState('anthropic');
+  const [pdfModel, setPdfModel] = useState('claude-sonnet-4-20250514');
 
   // Extraction selection state
   const [showExtractionSelector, setShowExtractionSelector] = useState(false);
@@ -111,16 +139,16 @@ export default function IdeaScorer() {
     if (!pdfFile) {
       return;
     }
-    startPdfAnalysis(pdfFile, sector, pdfProvider);
-  }, [pdfFile, sector, pdfProvider, startPdfAnalysis]);
+    startPdfAnalysis(pdfFile, sector, pdfProvider, pdfModel);
+  }, [pdfFile, sector, pdfProvider, pdfModel, startPdfAnalysis]);
 
   // Handle extraction scoring with progress
   const handleExtractionScore = useCallback(() => {
     if (!selectedExtraction) {
       return;
     }
-    startExtractionAnalysis(selectedExtraction.id, selectedExtraction.fileName, sector, pdfProvider);
-  }, [selectedExtraction, sector, pdfProvider, startExtractionAnalysis]);
+    startExtractionAnalysis(selectedExtraction.id, selectedExtraction.fileName, sector, pdfProvider, pdfModel);
+  }, [selectedExtraction, sector, pdfProvider, pdfModel, startExtractionAnalysis]);
 
   // Cancel PDF scoring
   const handleCancelPdfScore = useCallback(() => {
@@ -342,16 +370,52 @@ export default function IdeaScorer() {
                 </select>
               </div>
 
-              {/* AI Provider Info */}
-              <div className="mb-4 sm:mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-xs sm:text-sm font-medium text-blue-800">
-                    {t('provider.info')}
-                  </span>
+              {/* AI Provider & Model Selection */}
+              <div className="mb-4 sm:mb-6">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  AI Model
+                  <InfoTooltip text="Select the AI provider and model for analysis. Claude Sonnet 4 offers the best balance of quality and cost." />
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Provider Selection */}
+                  <select
+                    value={pdfProvider}
+                    onChange={(e) => {
+                      const newProvider = e.target.value;
+                      setPdfProvider(newProvider);
+                      // Set default model for new provider
+                      const providerConfig = PDF_PROVIDER_OPTIONS.find(p => p.value === newProvider);
+                      const defaultModel = providerConfig?.models.find(m => m.recommended) || providerConfig?.models[0];
+                      if (defaultModel) {
+                        setPdfModel(defaultModel.value);
+                      }
+                    }}
+                    className="w-full border border-gray-300 rounded-md px-3 sm:px-4 py-2.5 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {PDF_PROVIDER_OPTIONS.map((provider) => (
+                      <option key={provider.value} value={provider.value}>
+                        {provider.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Model Selection */}
+                  <select
+                    value={pdfModel}
+                    onChange={(e) => setPdfModel(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 sm:px-4 py-2.5 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {PDF_PROVIDER_OPTIONS.find(p => p.value === pdfProvider)?.models.map((model) => (
+                      <option key={model.value} value={model.value}>
+                        {model.label} {model.recommended ? '(Recommended)' : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                {/* Model description */}
+                <p className="mt-2 text-xs text-gray-500">
+                  {PDF_PROVIDER_OPTIONS.find(p => p.value === pdfProvider)?.models.find(m => m.value === pdfModel)?.description}
+                </p>
               </div>
 
               <button

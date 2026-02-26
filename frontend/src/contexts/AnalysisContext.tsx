@@ -16,12 +16,6 @@ import type {
   InitEvent
 } from '../types/index';
 
-// PDF provider options - same as in IdeaScorer
-const PDF_PROVIDER_OPTIONS = [
-  { value: 'anthropic', label: 'Anthropic Claude', model: 'claude-sonnet-4-20250514' },
-  { value: 'openai', label: 'OpenAI GPT-4', model: 'gpt-4o' },
-  { value: 'groq', label: 'Groq (Free, Fast)', model: 'llama-3.3-70b-versatile' },
-];
 
 interface AnalysisState {
   // Core analysis state
@@ -49,8 +43,8 @@ interface AnalysisState {
 
 interface AnalysisContextType extends AnalysisState {
   // Actions
-  startPdfAnalysis: (file: File, sector: string, provider: string) => void;
-  startExtractionAnalysis: (extractionId: number, fileName: string, sector: string, provider: string) => void;
+  startPdfAnalysis: (file: File, sector: string, provider: string, model: string) => void;
+  startExtractionAnalysis: (extractionId: number, fileName: string, sector: string, provider: string, model: string) => void;
   cancelAnalysis: () => void;
   clearResults: () => void;
 }
@@ -118,7 +112,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Start PDF analysis
-  const startPdfAnalysis = useCallback((file: File, sector: string, provider: string) => {
+  const startPdfAnalysis = useCallback((file: File, sector: string, provider: string, model: string) => {
     // Reset state
     setIsAnalyzing(true);
     setProgress(null);
@@ -129,14 +123,11 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     setSteps([]);
     setModelInfo(null);
 
-    const providerConfig = PDF_PROVIDER_OPTIONS.find(p => p.value === provider);
-    const model = providerConfig?.model;
-
     setAnalysisMetadata({
       fileName: file.name,
       sector,
       provider,
-      model: model || '',
+      model,
       isExtraction: false,
     });
 
@@ -162,7 +153,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     extractionId: number,
     fileName: string,
     sector: string,
-    provider: string
+    provider: string,
+    model: string
   ) => {
     // Reset state
     setIsAnalyzing(true);
@@ -174,14 +166,11 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     setSteps([]);
     setModelInfo(null);
 
-    const providerConfig = PDF_PROVIDER_OPTIONS.find(p => p.value === provider);
-    const model = providerConfig?.model;
-
     setAnalysisMetadata({
       fileName,
       sector,
       provider,
-      model: model || '',
+      model,
       isExtraction: true,
       extractionId,
     });
