@@ -39,20 +39,18 @@ const HistoryContext = createContext<HistoryContextType | null>(null);
 const STORAGE_KEY = 'vb-ideation-history';
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-
-  // Load history from localStorage on mount
-  useEffect(() => {
+  // Initialize from localStorage synchronously to avoid race condition
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored);
-        setHistory(parsed);
+        return JSON.parse(stored);
       }
     } catch (error) {
       console.error('Failed to load history from localStorage:', error);
     }
-  }, []);
+    return [];
+  });
 
   // Save history to localStorage whenever it changes
   useEffect(() => {
