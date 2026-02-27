@@ -6,18 +6,24 @@
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  variant?: 'light' | 'dark';
 }
 
-export default function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+export default function Spinner({ size = 'md', className = '', variant = 'dark' }: SpinnerProps) {
   const sizeClasses = {
     sm: 'w-4 h-4 border-2',
     md: 'w-5 h-5 border-2',
     lg: 'w-8 h-8 border-3',
   };
 
+  const variantClasses = {
+    light: 'border-white/30 border-t-white',
+    dark: 'border-blue-200 border-t-blue-600',
+  };
+
   return (
     <div
-      className={`${sizeClasses[size]} border-white/30 border-t-white rounded-full animate-spin ${className}`}
+      className={`${sizeClasses[size]} ${variantClasses[variant]} rounded-full animate-spin ${className}`}
       role="status"
       aria-label="Loading"
     />

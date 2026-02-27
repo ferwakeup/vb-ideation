@@ -63,7 +63,7 @@ export default function VerifyEmailPage() {
           {status === 'loading' && (
             <>
               <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Spinner size="lg" />
+                <Spinner size="lg" variant="light" />
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">{t('verification.verifying')}</h1>
               <p className="text-gray-400">{t('verification.pleaseWait')}</p>

@@ -151,7 +151,7 @@ export default function LoginPage() {
             >
               {isLoading ? (
                 <>
-                  <Spinner size="sm" />
+                  <Spinner size="sm" variant="light" />
                   <span>{t('login.submitting')}</span>
                 </>
               ) : success ? (

@@ -105,7 +105,7 @@ export default function ResendVerificationPage() {
             >
               {status === 'loading' ? (
                 <>
-                  <Spinner size="sm" />
+                  <Spinner size="sm" variant="light" />
                   <span>{t('resend.submitting')}</span>
                 </>
               ) : (

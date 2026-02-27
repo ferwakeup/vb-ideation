@@ -232,7 +232,7 @@ export default function RegisterPage() {
             >
               {isLoading ? (
                 <>
-                  <Spinner size="sm" />
+                  <Spinner size="sm" variant="light" />
                   <span>{t('register.submitting')}</span>
                 </>
               ) : (
