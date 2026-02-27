@@ -19,7 +19,7 @@ class ExtractionCreate(BaseModel):
 class ExtractionResponse(BaseModel):
     """Schema for extraction response."""
     id: int
-    user_id: int
+    user_id: Optional[int] = None
     file_name: str
     file_hash: str
     extracted_text: str
@@ -42,7 +42,7 @@ class ExtractionResponse(BaseModel):
 class ExtractionListResponse(BaseModel):
     """Schema for extraction list item (without full text)."""
     id: int
-    user_id: int
+    user_id: Optional[int] = None
     file_name: str
     file_hash: str
     model_used: str

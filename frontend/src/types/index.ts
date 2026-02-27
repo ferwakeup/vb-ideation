@@ -208,7 +208,7 @@ export interface ExtractionCreate {
 
 export interface Extraction {
   id: number;
-  user_id: number;
+  user_id?: number;
   file_name: string;
   file_hash: string;
   extracted_text: string;
@@ -227,7 +227,7 @@ export interface Extraction {
 
 export interface ExtractionListItem {
   id: number;
-  user_id: number;
+  user_id?: number;
   file_name: string;
   file_hash: string;
   model_used: string;
