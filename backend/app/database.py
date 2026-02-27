@@ -87,13 +87,20 @@ def run_extractions_migration():
     Migrate extractions table to new schema with compression support.
     Since this is a significant schema change (LargeBinary), we drop and recreate if needed.
     """
+    logger.info("run_extractions_migration: starting...")
     inspector = inspect(engine)
+    logger.info("run_extractions_migration: inspector created")
 
-    if 'extractions' not in inspector.get_table_names():
+    table_names = inspector.get_table_names()
+    logger.info(f"run_extractions_migration: got table names: {table_names}")
+
+    if 'extractions' not in table_names:
         logger.info("Extractions table doesn't exist yet, will be created by Base.metadata.create_all()")
         return
 
+    logger.info("run_extractions_migration: getting columns...")
     existing_columns = {col['name'] for col in inspector.get_columns('extractions')}
+    logger.info(f"run_extractions_migration: columns = {existing_columns}")
 
     # Check if the table has the old schema (extracted_text column without compression)
     if 'extracted_text' in existing_columns and 'compressed_text' not in existing_columns:
@@ -105,6 +112,8 @@ def run_extractions_migration():
                 logger.info("Dropped old extractions table")
             except Exception as e:
                 logger.warning(f"Could not drop extractions table: {e}")
+    else:
+        logger.info("run_extractions_migration: table schema is current, no migration needed")
 
 
 def run_extractions_nullable_user_migration():
