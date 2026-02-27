@@ -30,7 +30,7 @@ const DEBUG_MODE_KEY = 'vb_debug_mode';
 
 export function DebugProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.is_admin === true;
 
   const [isDebugMode, setIsDebugMode] = useState(() => {
     if (typeof window !== 'undefined') {

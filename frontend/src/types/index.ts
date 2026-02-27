@@ -56,7 +56,7 @@ export interface ProgressEvent {
   agent: string;
   title: string;
   description: string;
-  status: 'pending' | 'running' | 'completed' | 'error';
+  status: 'pending' | 'running' | 'completed' | 'error' | 'skipped';
   inputs?: string[];
   outputs?: string[];
   model_info?: ModelInfo;
