@@ -106,6 +106,7 @@
       "sector": "Sector",
       "overall": "Overall",
       "recommendation": "Recommendation",
+      "model": "Model",
       "actions": "Actions"
     },
     "viewDetails": "View details",

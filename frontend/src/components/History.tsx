@@ -63,42 +63,38 @@ export default function History() {
       let aValue: string | number;
       let bValue: string | number;
 
-      // Check if sorting by a dimension
-      const isDimensionSort = DIMENSION_COLUMNS.some(d => d.key === sortField);
-
-      if (isDimensionSort) {
-        aValue = getDimensionScore(a, sortField) ?? -1;
-        bValue = getDimensionScore(b, sortField) ?? -1;
-      } else {
-        switch (sortField) {
-          case 'timestamp':
-            aValue = new Date(a.timestamp).getTime();
-            bValue = new Date(b.timestamp).getTime();
-            break;
-          case 'fileName':
-            aValue = a.fileName.toLowerCase();
-            bValue = b.fileName.toLowerCase();
-            break;
-          case 'user':
-            aValue = (a.user?.fullName || '').toLowerCase();
-            bValue = (b.user?.fullName || '').toLowerCase();
-            break;
-          case 'sector':
-            aValue = a.sector.toLowerCase();
-            bValue = b.sector.toLowerCase();
-            break;
-          case 'overallScore':
-            aValue = a.overallScore;
-            bValue = b.overallScore;
-            break;
-          case 'recommendation':
-            aValue = a.recommendation.toLowerCase();
-            bValue = b.recommendation.toLowerCase();
-            break;
-          default:
-            aValue = 0;
-            bValue = 0;
-        }
+      switch (sortField) {
+        case 'timestamp':
+          aValue = new Date(a.timestamp).getTime();
+          bValue = new Date(b.timestamp).getTime();
+          break;
+        case 'fileName':
+          aValue = a.fileName.toLowerCase();
+          bValue = b.fileName.toLowerCase();
+          break;
+        case 'user':
+          aValue = (a.user?.fullName || '').toLowerCase();
+          bValue = (b.user?.fullName || '').toLowerCase();
+          break;
+        case 'sector':
+          aValue = a.sector.toLowerCase();
+          bValue = b.sector.toLowerCase();
+          break;
+        case 'overallScore':
+          aValue = a.overallScore;
+          bValue = b.overallScore;
+          break;
+        case 'recommendation':
+          aValue = a.recommendation.toLowerCase();
+          bValue = b.recommendation.toLowerCase();
+          break;
+        case 'modelUsed':
+          aValue = a.modelUsed.toLowerCase();
+          bValue = b.modelUsed.toLowerCase();
+          break;
+        default:
+          aValue = 0;
+          bValue = 0;
       }
 
       if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -427,21 +423,15 @@ export default function History() {
                         <SortIndicator field="recommendation" />
                       </div>
                     </th>
-
-                    {/* Dimension columns */}
-                    {DIMENSION_COLUMNS.map((dim) => (
-                      <th
-                        key={dim.key}
-                        className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap"
-                        onClick={() => handleSort(dim.key)}
-                        title={dim.key}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          {dim.short}
-                          <SortIndicator field={dim.key} />
-                        </div>
-                      </th>
-                    ))}
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('modelUsed')}
+                    >
+                      <div className="flex items-center gap-1">
+                        {t('history.columns.model')}
+                        <SortIndicator field="modelUsed" />
+                      </div>
+                    </th>
 
                     {/* Actions column */}
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -485,18 +475,11 @@ export default function History() {
                           {entry.recommendation}
                         </span>
                       </td>
-
-                      {/* Dimension scores */}
-                      {DIMENSION_COLUMNS.map((dim) => {
-                        const score = getDimensionScore(entry, dim.key);
-                        return (
-                          <td key={dim.key} className="px-3 py-4 whitespace-nowrap text-center">
-                            <span className={`text-sm ${getScoreColor(score)}`}>
-                              {score !== null ? score.toFixed(1) : '-'}
-                            </span>
-                          </td>
-                        );
-                      })}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">
+                          {entry.modelUsed}
+                        </span>
+                      </td>
 
                       {/* Actions */}
                       <td className="px-4 py-4 whitespace-nowrap text-center">
