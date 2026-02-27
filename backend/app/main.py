@@ -84,11 +84,17 @@ async def root():
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
+    logger.info("Starting startup_event...")
+
     # Import models to ensure they are registered with SQLAlchemy
+    logger.info("Importing models...")
     from app.models import user, extraction  # noqa: F401
+    logger.info("Models imported")
 
     # Run migrations to add any missing columns
+    logger.info("Running migrations...")
     run_migrations()
+    logger.info("run_migrations() complete")
     run_extractions_migration()
     logger.info("Database migrations completed")
 
