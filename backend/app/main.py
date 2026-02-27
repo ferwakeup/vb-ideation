@@ -4,7 +4,7 @@ Multi-Agent System for Business Idea Evaluation.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import scoring, auth, admin, extractions
+from app.routers import scoring, auth, admin, extractions, analyses
 from app.config import get_settings
 from app.database import engine, Base, run_migrations, init_admin_user
 import logging
@@ -63,6 +63,7 @@ app.include_router(scoring.router, prefix="/api/v1", tags=["scoring"])
 app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 app.include_router(extractions.router, prefix="/api/v1", tags=["extractions"])
+app.include_router(analyses.router, prefix="/api/v1", tags=["analyses"])
 
 
 @app.get("/")
@@ -88,7 +89,7 @@ async def startup_event():
 
     # Import models to ensure they are registered with SQLAlchemy
     logger.info("Importing models...")
-    from app.models import user, extraction  # noqa: F401
+    from app.models import user, extraction, analysis  # noqa: F401
     logger.info("Models imported")
 
     # Run migrations to add any missing columns

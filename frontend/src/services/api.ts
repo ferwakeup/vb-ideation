@@ -24,7 +24,9 @@ import type {
   ExtractionScoringRequest,
   ExtractionCheck,
   ExtractionCheckResponse,
-  ExtractionStats
+  ExtractionStats,
+  AnalysisCreate,
+  Analysis
 } from '../types/index';
 
 const API_BASE = import.meta.env.PROD
@@ -399,6 +401,58 @@ export const api = {
    */
   deleteExtraction: async (token: string, extractionId: number): Promise<{ message: string }> => {
     const response = await axios.delete(`${API_BASE}/extractions/${extractionId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  // Analysis endpoints
+
+  /**
+   * Create a new analysis
+   */
+  createAnalysis: async (token: string, analysis: AnalysisCreate): Promise<Analysis> => {
+    const response = await axios.post(`${API_BASE}/analyses/`, analysis, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * List all analyses
+   */
+  getAnalyses: async (token: string): Promise<Analysis[]> => {
+    const response = await axios.get(`${API_BASE}/analyses/`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Get a specific analysis
+   */
+  getAnalysis: async (token: string, analysisId: number): Promise<Analysis> => {
+    const response = await axios.get(`${API_BASE}/analyses/${analysisId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete an analysis
+   */
+  deleteAnalysis: async (token: string, analysisId: number): Promise<{ message: string }> => {
+    const response = await axios.delete(`${API_BASE}/analyses/${analysisId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  /**
+   * Clear all analyses
+   */
+  clearAnalyses: async (token: string): Promise<{ message: string }> => {
+    const response = await axios.delete(`${API_BASE}/analyses/`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;

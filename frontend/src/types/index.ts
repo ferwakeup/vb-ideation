@@ -266,3 +266,37 @@ export interface ExtractionStats {
   average_original_kb: number;
   average_compressed_kb: number;
 }
+
+// Analysis types (stored in database)
+export interface AnalysisCreate {
+  file_name: string;
+  sector: string;
+  idea_summary: string;
+  overall_score: number;
+  recommendation: string;
+  recommendation_rationale?: string;
+  dimension_scores: DimensionScore[];
+  key_strengths: string[];
+  key_concerns: string[];
+  model_used: string;
+  processing_time_seconds?: number;
+}
+
+export interface Analysis {
+  id: number;
+  user_id?: number;
+  file_name: string;
+  sector: string;
+  idea_summary: string;
+  overall_score: number;
+  recommendation: string;
+  recommendation_rationale?: string;
+  dimension_scores: DimensionScore[];
+  key_strengths: string[];
+  key_concerns: string[];
+  model_used: string;
+  processing_time_seconds?: number;
+  created_at: string;
+  user_full_name?: string;
+  user_email?: string;
+}

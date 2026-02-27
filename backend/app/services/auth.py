@@ -162,3 +162,32 @@ async def get_current_user(
         )
 
     return user
+
+
+# Optional security - doesn't require auth but uses it if present
+security_optional = HTTPBearer(auto_error=False)
+
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """
+    FastAPI dependency to get the current user if authenticated.
+    Returns None if no valid token is provided (doesn't raise error).
+    """
+    if credentials is None:
+        return None
+
+    token = credentials.credentials
+    email = decode_token(token)
+
+    if email is None:
+        return None
+
+    user = get_user_by_email(db, email)
+
+    if user is None or not user.is_active:
+        return None
+
+    return user

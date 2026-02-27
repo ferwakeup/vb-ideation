@@ -1,9 +1,11 @@
 /**
  * History Context
- * Manages the history of analyzed documents with localStorage persistence
+ * Manages the history of analyzed documents with database persistence
  */
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { PDFScoringResult, DimensionScore, User } from '../types/index';
+import { useAuth } from './AuthContext';
+import { api } from '../services/api';
+import type { PDFScoringResult, DimensionScore, User, Analysis } from '../types/index';
 
 export interface HistoryEntryUser {
   fullName: string;
@@ -28,76 +30,128 @@ export interface HistoryEntry {
 
 interface HistoryContextType {
   history: HistoryEntry[];
+  isLoading: boolean;
   addEntry: (result: PDFScoringResult, user?: User | null) => void;
   removeEntry: (id: string) => void;
   clearHistory: () => void;
   getEntry: (id: string) => HistoryEntry | undefined;
+  refreshHistory: () => Promise<void>;
 }
 
 const HistoryContext = createContext<HistoryContextType | null>(null);
 
-const STORAGE_KEY = 'vb-ideation-history';
+// Convert API Analysis to HistoryEntry
+function analysisToHistoryEntry(analysis: Analysis): HistoryEntry {
+  return {
+    id: String(analysis.id),
+    timestamp: analysis.created_at,
+    fileName: analysis.file_name,
+    sector: analysis.sector,
+    overallScore: analysis.overall_score,
+    recommendation: analysis.recommendation,
+    dimensionScores: analysis.dimension_scores,
+    modelUsed: analysis.model_used,
+    processingTime: analysis.processing_time_seconds || 0,
+    ideaSummary: analysis.idea_summary,
+    keyStrengths: analysis.key_strengths,
+    keyConcerns: analysis.key_concerns,
+    user: analysis.user_full_name ? {
+      fullName: analysis.user_full_name,
+      email: analysis.user_email || '',
+    } : undefined,
+  };
+}
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
-  // Initialize from localStorage synchronously to avoid race condition
-  const [history, setHistory] = useState<HistoryEntry[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (error) {
-      console.error('Failed to load history from localStorage:', error);
-    }
-    return [];
-  });
+  const { token, isAuthenticated } = useAuth();
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Save history to localStorage whenever it changes
+  // Load history from API when authenticated
+  const refreshHistory = useCallback(async () => {
+    if (!token) {
+      setHistory([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const analyses = await api.getAnalyses(token);
+      setHistory(analyses.map(analysisToHistoryEntry));
+    } catch (error) {
+      console.error('Failed to load history from API:', error);
+      setHistory([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  // Load history when auth changes
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-    } catch (error) {
-      console.error('Failed to save history to localStorage:', error);
+    if (isAuthenticated && token) {
+      refreshHistory();
+    } else {
+      setHistory([]);
     }
-  }, [history]);
+  }, [isAuthenticated, token, refreshHistory]);
 
-  const addEntry = useCallback((result: PDFScoringResult, user?: User | null) => {
-    const entry: HistoryEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: result.timestamp,
-      fileName: result.source,
-      sector: result.sector,
-      overallScore: result.overall_score,
-      recommendation: result.recommendation,
-      dimensionScores: result.dimension_scores,
-      modelUsed: result.model_used,
-      processingTime: result.processing_time_seconds,
-      ideaSummary: result.idea_summary,
-      keyStrengths: result.key_strengths,
-      keyConcerns: result.key_concerns,
-      user: user ? {
-        fullName: user.full_name,
-        email: user.email,
-      } : undefined,
-    };
+  const addEntry = useCallback(async (result: PDFScoringResult, user?: User | null) => {
+    if (!token) {
+      console.warn('Cannot save analysis: not authenticated');
+      return;
+    }
 
-    setHistory(prev => [entry, ...prev]);
-  }, []);
+    try {
+      const analysis = await api.createAnalysis(token, {
+        file_name: result.source,
+        sector: result.sector,
+        idea_summary: result.idea_summary,
+        overall_score: result.overall_score,
+        recommendation: result.recommendation,
+        recommendation_rationale: result.recommendation_rationale,
+        dimension_scores: result.dimension_scores,
+        key_strengths: result.key_strengths,
+        key_concerns: result.key_concerns,
+        model_used: result.model_used,
+        processing_time_seconds: result.processing_time_seconds,
+      });
 
-  const removeEntry = useCallback((id: string) => {
-    setHistory(prev => prev.filter(entry => entry.id !== id));
-  }, []);
+      // Add to local state
+      const entry = analysisToHistoryEntry(analysis);
+      setHistory(prev => [entry, ...prev]);
+    } catch (error) {
+      console.error('Failed to save analysis to API:', error);
+    }
+  }, [token]);
 
-  const clearHistory = useCallback(() => {
-    setHistory([]);
-  }, []);
+  const removeEntry = useCallback(async (id: string) => {
+    if (!token) return;
+
+    try {
+      await api.deleteAnalysis(token, parseInt(id));
+      setHistory(prev => prev.filter(entry => entry.id !== id));
+    } catch (error) {
+      console.error('Failed to delete analysis:', error);
+    }
+  }, [token]);
+
+  const clearHistory = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      await api.clearAnalyses(token);
+      setHistory([]);
+    } catch (error) {
+      console.error('Failed to clear history:', error);
+    }
+  }, [token]);
 
   const getEntry = useCallback((id: string) => {
     return history.find(entry => entry.id === id);
   }, [history]);
 
   return (
-    <HistoryContext.Provider value={{ history, addEntry, removeEntry, clearHistory, getEntry }}>
+    <HistoryContext.Provider value={{ history, isLoading, addEntry, removeEntry, clearHistory, getEntry, refreshHistory }}>
       {children}
     </HistoryContext.Provider>
   );
