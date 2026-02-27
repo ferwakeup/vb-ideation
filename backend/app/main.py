@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import scoring, auth, admin, extractions
 from app.config import get_settings
-from app.database import engine, Base, run_migrations, run_extractions_migration, run_extractions_nullable_user_migration, init_admin_user
+from app.database import engine, Base, run_migrations, run_extractions_migration, init_admin_user
 import logging
 
 # Configure logging
@@ -90,7 +90,6 @@ async def startup_event():
     # Run migrations to add any missing columns
     run_migrations()
     run_extractions_migration()
-    run_extractions_nullable_user_migration()
     logger.info("Database migrations completed")
 
     # Create database tables (for new installations)
