@@ -107,6 +107,35 @@ def run_extractions_migration():
                 logger.warning(f"Could not drop extractions table: {e}")
 
 
+def run_extractions_nullable_user_migration():
+    """
+    Make user_id nullable in extractions table to support anonymous extractions.
+    """
+    inspector = inspect(engine)
+
+    if 'extractions' not in inspector.get_table_names():
+        logger.info("Extractions table doesn't exist yet, will be created by Base.metadata.create_all()")
+        return
+
+    with engine.connect() as conn:
+        try:
+            if DATABASE_URL.startswith("sqlite"):
+                # SQLite doesn't support ALTER COLUMN, but it also doesn't enforce NOT NULL on existing columns
+                # after table creation the same way, so we skip for SQLite
+                logger.info("SQLite detected - nullable migration not needed")
+            else:
+                # PostgreSQL: ALTER COLUMN to DROP NOT NULL constraint
+                conn.execute(text("ALTER TABLE extractions ALTER COLUMN user_id DROP NOT NULL"))
+                conn.commit()
+                logger.info("Made user_id nullable in extractions table")
+        except Exception as e:
+            # This will fail if already nullable, which is fine
+            if "does not exist" in str(e).lower() or "already" in str(e).lower():
+                logger.info("user_id is already nullable or column doesn't exist")
+            else:
+                logger.warning(f"Could not make user_id nullable: {e}")
+
+
 def init_admin_user():
     """
     Initialize the admin user (fernando@moven.pro).
