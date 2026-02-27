@@ -7,6 +7,7 @@ import { createContext, useContext, useState, useRef, useCallback, type ReactNod
 import { api } from '../services/api';
 import { useHistory } from './HistoryContext';
 import { useAuth } from './AuthContext';
+import { useDebug, type DebugMessage } from './DebugContext';
 import type {
   ProgressEvent,
   PDFScoringResult,
@@ -54,6 +55,7 @@ const AnalysisContext = createContext<AnalysisContextType | null>(null);
 export function AnalysisProvider({ children }: { children: ReactNode }) {
   const { addEntry } = useHistory();
   const { user } = useAuth();
+  const { addMessage: addDebugMessage, isDebugMode } = useDebug();
 
   // Core state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -111,6 +113,19 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     setProgress(null);
   }, []);
 
+  // Handle debug events from backend
+  const handleDebug = useCallback((event: { level: string; category: string; message: string; details?: Record<string, unknown>; source: string }) => {
+    if (isDebugMode) {
+      addDebugMessage({
+        level: event.level as DebugMessage['level'],
+        category: event.category as DebugMessage['category'],
+        message: event.message,
+        details: event.details,
+        source: event.source as DebugMessage['source'],
+      });
+    }
+  }, [isDebugMode, addDebugMessage]);
+
   // Start PDF analysis
   const startPdfAnalysis = useCallback((file: File, sector: string, provider: string, model: string) => {
     // Reset state
@@ -144,9 +159,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       handleProgress,
       handleResult,
       handleError,
-      handleInit
+      handleInit,
+      handleDebug
     );
-  }, [handleProgress, handleResult, handleError, handleInit]);
+  }, [handleProgress, handleResult, handleError, handleInit, handleDebug]);
 
   // Start extraction analysis
   const startExtractionAnalysis = useCallback((
@@ -187,9 +203,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       handleProgress,
       handleResult,
       handleError,
-      handleInit
+      handleInit,
+      handleDebug
     );
-  }, [handleProgress, handleResult, handleError, handleInit]);
+  }, [handleProgress, handleResult, handleError, handleInit, handleDebug]);
 
   // Cancel analysis
   const cancelAnalysis = useCallback(() => {

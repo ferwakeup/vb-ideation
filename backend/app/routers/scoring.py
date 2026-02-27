@@ -290,23 +290,79 @@ async def score_pdf_stream(
             }
             yield f"event: init\ndata: {json.dumps(arch_event)}\n\n"
 
+            # Send initial debug info
+            init_debug = {
+                "level": "info",
+                "category": "general",
+                "message": f"Starting PDF analysis: {file.filename}",
+                "details": {
+                    "file_name": file.filename,
+                    "file_hash": file_hash[:16] + "...",
+                    "sector": sector,
+                    "provider": provider,
+                    "model": model_used,
+                    "use_checkpoints": use_checkpoints
+                },
+                "source": "backend"
+            }
+            yield f"event: debug\ndata: {json.dumps(init_debug)}\n\n"
+
             def progress_callback(event: dict):
                 """Callback to push progress events to the queue."""
                 progress_queue.put(("progress", event))
 
+            def debug_callback(level: str, category: str, message: str, details: dict = None):
+                """Callback to push debug events to the queue."""
+                debug_event = {
+                    "level": level,
+                    "category": category,
+                    "message": message,
+                    "details": details or {},
+                    "source": "backend"
+                }
+                progress_queue.put(("debug", debug_event))
+
             def extraction_callback(extracted_text: str):
                 """Callback to save extraction immediately after Agent 1 completes."""
+                debug_callback("info", "extraction", f"Agent 1 completed. Extracted text length: {len(extracted_text)} chars (~{len(extracted_text)//4} tokens)")
+
                 try:
                     # Check if extraction already exists
+                    debug_callback("info", "database", f"Checking for existing extraction (hash: {file_hash[:16]}..., model: {model_used})")
+
                     existing = db.query(Extraction).filter(
                         Extraction.file_hash == file_hash,
                         Extraction.model_used == model_used
                     ).first()
 
-                    if not existing:
-                        # Compress the text
-                        compressed, original_size, compressed_size = Extraction.compress_text(extracted_text)
+                    if existing:
+                        debug_callback("info", "database", f"Extraction already exists (ID: {existing.id}). Skipping save.", {
+                            "extraction_id": existing.id,
+                            "file_name": existing.file_name,
+                            "created_at": str(existing.created_at)
+                        })
+                        logger.info(f"Extraction already exists for {file.filename}")
+                        return
 
+                    # Compress the text
+                    debug_callback("info", "compression", f"Compressing extracted text ({len(extracted_text)} bytes)...")
+
+                    try:
+                        compressed, original_size, compressed_size = Extraction.compress_text(extracted_text)
+                        compression_pct = (1 - compressed_size / original_size) * 100
+                        debug_callback("success", "compression", f"Compression successful: {original_size} -> {compressed_size} bytes ({compression_pct:.1f}% saved)", {
+                            "original_size": original_size,
+                            "compressed_size": compressed_size,
+                            "compression_ratio": round(compression_pct, 2)
+                        })
+                    except Exception as comp_err:
+                        debug_callback("error", "compression", f"Compression failed: {str(comp_err)}")
+                        raise
+
+                    # Save to database
+                    debug_callback("info", "database", "Creating new extraction record...")
+
+                    try:
                         new_extraction = Extraction(
                             file_name=file.filename,
                             file_hash=file_hash,
@@ -320,13 +376,36 @@ async def score_pdf_stream(
                         )
                         db.add(new_extraction)
                         db.commit()
-                        compression_pct = (1 - compressed_size / original_size) * 100
+                        db.refresh(new_extraction)
+
+                        debug_callback("success", "database", f"Extraction saved successfully (ID: {new_extraction.id})", {
+                            "extraction_id": new_extraction.id,
+                            "file_name": file.filename,
+                            "file_hash": file_hash[:16] + "...",
+                            "model_used": model_used,
+                            "token_count": len(extracted_text) // 4,
+                            "compressed_size": compressed_size
+                        })
                         logger.info(f"Saved extraction for {file.filename} (hash: {file_hash[:8]}..., compressed {compression_pct:.1f}%)")
-                    else:
-                        logger.info(f"Extraction already exists for {file.filename}")
+
+                    except Exception as db_err:
+                        debug_callback("error", "database", f"Database save failed: {str(db_err)}", {
+                            "error_type": type(db_err).__name__,
+                            "error_details": str(db_err)
+                        })
+                        raise
+
                 except Exception as e:
+                    debug_callback("error", "extraction", f"Failed to save extraction: {str(e)}", {
+                        "error_type": type(e).__name__,
+                        "error_details": str(e)
+                    })
                     logger.error(f"Failed to save extraction after Agent 1: {e}")
-                    db.rollback()
+                    try:
+                        db.rollback()
+                        debug_callback("warning", "database", "Database transaction rolled back")
+                    except Exception:
+                        pass
 
             def run_scoring():
                 """Run scoring in a separate thread."""
@@ -362,6 +441,8 @@ async def score_pdf_stream(
 
                             if event_type == "progress":
                                 yield f"event: progress\ndata: {json.dumps(event_data)}\n\n"
+                            elif event_type == "debug":
+                                yield f"event: debug\ndata: {json.dumps(event_data)}\n\n"
                             elif event_type == "done":
                                 # Scoring complete
                                 if result_holder["error"]:

@@ -7,6 +7,7 @@ import './i18n';
 import { HistoryProvider } from './contexts/HistoryContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AnalysisProvider } from './contexts/AnalysisContext';
+import { DebugProvider } from './contexts/DebugContext';
 import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -33,9 +34,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <HistoryProvider>
-          <AnalysisProvider>
-            <BrowserRouter>
+        <DebugProvider>
+          <HistoryProvider>
+            <AnalysisProvider>
+              <BrowserRouter>
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<LandingPage />} />
@@ -58,9 +60,10 @@ function App() {
                   <Route path="users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
                 </Route>
               </Routes>
-            </BrowserRouter>
-          </AnalysisProvider>
-        </HistoryProvider>
+              </BrowserRouter>
+            </AnalysisProvider>
+          </HistoryProvider>
+        </DebugProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

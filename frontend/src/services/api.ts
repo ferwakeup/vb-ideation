@@ -48,7 +48,8 @@ export const api = {
     onProgress: (event: ProgressEvent) => void,
     onResult: (result: PDFScoringResult) => void,
     onError: (error: string) => void,
-    onInit?: (event: InitEvent) => void
+    onInit?: (event: InitEvent) => void,
+    onDebug?: (event: { level: string; category: string; message: string; details?: Record<string, unknown>; source: string }) => void
   ): { abort: () => void } => {
     const abortController = new AbortController();
 
@@ -100,6 +101,8 @@ export const api = {
                   onResult(parsed as PDFScoringResult);
                 } else if (eventType === 'error') {
                   onError(parsed.message || 'Unknown error');
+                } else if (eventType === 'debug') {
+                  onDebug?.(parsed);
                 }
               } catch (e) {
                 console.error('Failed to parse SSE data:', e);
@@ -148,7 +151,8 @@ export const api = {
     onProgress: (event: ProgressEvent) => void,
     onResult: (result: PDFScoringResult) => void,
     onError: (error: string) => void,
-    onInit?: (event: InitEvent) => void
+    onInit?: (event: InitEvent) => void,
+    onDebug?: (event: { level: string; category: string; message: string; details?: Record<string, unknown>; source: string }) => void
   ): { abort: () => void } => {
     const abortController = new AbortController();
 
@@ -199,6 +203,8 @@ export const api = {
                   onResult(parsed as PDFScoringResult);
                 } else if (eventType === 'error') {
                   onError(parsed.message || 'Unknown error');
+                } else if (eventType === 'debug') {
+                  onDebug?.(parsed);
                 }
               } catch (e) {
                 console.error('Failed to parse SSE data:', e);

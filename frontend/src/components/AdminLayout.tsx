@@ -7,7 +7,9 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalysis } from '../contexts/AnalysisContext';
+import { useDebug } from '../contexts/DebugContext';
 import LanguageSelector from './LanguageSelector';
+import DebugConsole from './DebugConsole';
 
 interface NavItem {
   key: string;
@@ -53,6 +55,7 @@ export default function AdminLayout() {
   const { t } = useTranslation('common');
   const { user, logout } = useAuth();
   const { isAnalyzing, progress } = useAnalysis();
+  const { isAdmin, isDebugMode, toggleDebugMode } = useDebug();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -119,7 +122,24 @@ export default function AdminLayout() {
           </div>
           <span className="font-bold text-white">{t('appName')}</span>
         </div>
-        <LanguageSelector variant="dark" compact />
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={toggleDebugMode}
+              className={`p-2 rounded-lg transition-colors ${
+                isDebugMode
+                  ? 'bg-orange-600 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+              title={isDebugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+            </button>
+          )}
+          <LanguageSelector variant="dark" compact />
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -161,10 +181,26 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        {/* Language Selector - Desktop */}
+        {/* Language Selector & Debug Toggle - Desktop */}
         {!sidebarCollapsed && (
-          <div className="hidden lg:block px-4 py-3 border-b border-gray-800">
+          <div className="hidden lg:flex items-center justify-between px-4 py-3 border-b border-gray-800">
             <LanguageSelector variant="dark" />
+            {isAdmin && (
+              <button
+                onClick={toggleDebugMode}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                  isDebugMode
+                    ? 'bg-orange-600 text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+                title={isDebugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                <span>Debug</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -300,6 +336,9 @@ export default function AdminLayout() {
       <main className="flex-1 overflow-auto pt-14 lg:pt-0">
         <Outlet />
       </main>
+
+      {/* Debug Console */}
+      <DebugConsole />
     </div>
   );
 }
