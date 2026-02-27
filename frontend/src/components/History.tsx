@@ -3,9 +3,11 @@
  * Displays a sortable table of previously analyzed documents
  * and a tab for extracted documents
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory, type HistoryEntry } from '../contexts/HistoryContext';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api';
 import Extractions from './Extractions';
 
 type TabType = 'analyses' | 'extractions';
@@ -32,11 +34,22 @@ export default function History() {
   const { t } = useTranslation('scorer');
   const { t: tCommon } = useTranslation('common');
   const { history, removeEntry, clearHistory } = useHistory();
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('analyses');
   const [sortField, setSortField] = useState<SortField>('timestamp');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
   const [showLegend, setShowLegend] = useState(false);
+  const [extractionCount, setExtractionCount] = useState<number | null>(null);
+
+  // Fetch extraction count
+  useEffect(() => {
+    if (token) {
+      api.getExtractions(token)
+        .then(data => setExtractionCount(data.length))
+        .catch(() => setExtractionCount(null));
+    }
+  }, [token]);
 
   // Get dimension score from entry
   const getDimensionScore = (entry: HistoryEntry, dimensionKey: string): number | null => {
@@ -208,6 +221,11 @@ export default function History() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 {t('history.tabs.extractions')}
+                {extractionCount !== null && (
+                  <span className="bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
+                    {extractionCount}
+                  </span>
+                )}
               </div>
             </button>
           </nav>
