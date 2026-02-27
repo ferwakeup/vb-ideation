@@ -12,23 +12,8 @@ import Extractions from './Extractions';
 
 type TabType = 'analyses' | 'extractions';
 
-type SortField = 'timestamp' | 'fileName' | 'user' | 'sector' | 'overallScore' | 'recommendation' | string;
+type SortField = 'timestamp' | 'fileName' | 'user' | 'sector' | 'overallScore' | 'recommendation' | 'modelUsed';
 type SortDirection = 'asc' | 'desc';
-
-// Standard dimension names for column headers
-const DIMENSION_COLUMNS = [
-  { key: 'Market Potential', short: 'Market' },
-  { key: 'Differentiated Approach and Positioning', short: 'Diff. Approach' },
-  { key: 'Sustainable Competitive Advantage', short: 'Comp. Adv.' },
-  { key: 'Differentiating Element', short: 'Diff. Element' },
-  { key: 'Technical Feasibility', short: 'Tech. Feas.' },
-  { key: 'Affordable & Rapid Implementation', short: 'Rapid Impl.' },
-  { key: 'AI Enablement for Core Value', short: 'AI Enable.' },
-  { key: 'Barrier to Entry', short: 'Barrier' },
-  { key: 'Scalable Technology & Operations', short: 'Scalability' },
-  { key: 'Product-Focused Output', short: 'Product' },
-  { key: 'Subscription-Based Platform Access', short: 'Subscription' },
-];
 
 export default function History() {
   const { t } = useTranslation('scorer');
@@ -50,12 +35,6 @@ export default function History() {
         .catch(() => setExtractionCount(null));
     }
   }, [token]);
-
-  // Get dimension score from entry
-  const getDimensionScore = (entry: HistoryEntry, dimensionKey: string): number | null => {
-    const dim = entry.dimensionScores.find(d => d.dimension === dimensionKey);
-    return dim ? dim.score : null;
-  };
 
   // Sort history entries
   const sortedHistory = useMemo(() => {
