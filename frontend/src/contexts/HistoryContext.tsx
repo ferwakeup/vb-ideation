@@ -95,7 +95,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, token, refreshHistory]);
 
-  const addEntry = useCallback(async (result: PDFScoringResult, user?: User | null) => {
+  const addEntry = useCallback(async (result: PDFScoringResult, _user?: User | null) => {
     if (!token) {
       console.warn('Cannot save analysis: not authenticated');
       return;
