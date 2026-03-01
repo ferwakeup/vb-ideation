@@ -24,7 +24,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [actionLoading, setActionLoading] = useState<number | string | null>(null);
 
   const getStatusBadge = (status: UserStatus) => {
     const badges = {
@@ -74,12 +74,13 @@ export default function AdminUsersPage() {
     }
   };
 
-  const toggleUserActive = async (userId: number, currentlyActive: boolean) => {
+  const toggleUserActive = async (userId: number | string, currentlyActive: boolean) => {
     if (!token) return;
 
     try {
       setActionLoading(userId);
-      const updatedUser = await api.updateUserStatus(token, userId, {
+      const numericId = typeof userId === 'string' ? parseInt(userId) || userId : userId;
+      const updatedUser = await api.updateUserStatus(token, numericId as number, {
         is_active: !currentlyActive
       });
       setUsers(users.map(u => u.id === userId ? updatedUser : u));
@@ -95,12 +96,13 @@ export default function AdminUsersPage() {
     }
   };
 
-  const toggleUserVerified = async (userId: number, currentlyVerified: boolean) => {
+  const toggleUserVerified = async (userId: number | string, currentlyVerified: boolean) => {
     if (!token) return;
 
     try {
       setActionLoading(userId);
-      const updatedUser = await api.updateUserStatus(token, userId, {
+      const numericId = typeof userId === 'string' ? parseInt(userId) || userId : userId;
+      const updatedUser = await api.updateUserStatus(token, numericId as number, {
         is_verified: !currentlyVerified
       });
       setUsers(users.map(u => u.id === userId ? updatedUser : u));
@@ -116,7 +118,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const deleteUser = async (userId: number) => {
+  const deleteUser = async (userId: number | string) => {
     if (!token) return;
     if (!confirm(t('confirmDelete'))) {
       return;
@@ -124,7 +126,8 @@ export default function AdminUsersPage() {
 
     try {
       setActionLoading(userId);
-      await api.deleteUser(token, userId);
+      const numericId = typeof userId === 'string' ? parseInt(userId) || userId : userId;
+      await api.deleteUser(token, numericId as number);
       setUsers(users.filter(u => u.id !== userId));
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {

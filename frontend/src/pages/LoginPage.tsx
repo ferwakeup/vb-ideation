@@ -35,19 +35,13 @@ export default function LoginPage() {
         navigate('/app');
       }, 1000);
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { status?: number; data?: { detail?: string } } };
-        const status = axiosError.response?.status;
-        const detail = axiosError.response?.data?.detail;
+      const errorMessage = err instanceof Error ? err.message : String(err);
 
-        // Check if it's a verification error (403)
-        if (status === 403 && detail?.includes('verify')) {
-          setNeedsVerification(true);
-        } else {
-          setError(detail || t('login.defaultError'));
-        }
+      // Check if it's a verification error
+      if (errorMessage.toLowerCase().includes('verify')) {
+        setNeedsVerification(true);
       } else {
-        setError(t('login.genericError'));
+        setError(errorMessage || t('login.defaultError'));
       }
     } finally {
       setIsLoading(false);

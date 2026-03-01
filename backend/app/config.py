@@ -39,8 +39,14 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = True
 
-    # JWT settings
+    # JWT settings (legacy - kept for backward compatibility)
     jwt_secret_key: str = "your-secret-key-change-in-production"
+
+    # Supabase settings
+    supabase_url: str = ""  # Supabase project URL
+    supabase_anon_key: str = ""  # Supabase anon/public key
+    supabase_service_role_key: str = ""  # Supabase service role key (for admin operations)
+    supabase_jwt_secret: str = ""  # Supabase JWT secret for token validation
 
     # Email settings
     resend_api_key: str = ""  # Resend API key (preferred)

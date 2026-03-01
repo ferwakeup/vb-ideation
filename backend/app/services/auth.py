@@ -1,10 +1,12 @@
 """
-Authentication service with JWT and password utilities.
+Authentication service with Supabase JWT validation.
+
+This module handles JWT token validation for Supabase authentication.
+User authentication is handled by Supabase Auth - we only validate tokens here.
 """
-from datetime import datetime, timedelta
 from typing import Optional
+from uuid import UUID
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -13,53 +15,48 @@ from app.database import get_db
 from app.models.user import User
 from app.config import get_settings
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# JWT settings
+# JWT settings for Supabase
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 # Security scheme
 security = HTTPBearer()
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
+def decode_supabase_token(token: str) -> Optional[dict]:
+    """
+    Decode and validate a Supabase JWT token.
 
-
-def get_password_hash(password: str) -> str:
-    """Hash a password."""
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token."""
+    Returns the payload if valid, None otherwise.
+    The payload contains:
+    - sub: User UUID
+    - email: User email
+    - role: User role (e.g., "authenticated")
+    - exp: Expiration timestamp
+    """
     settings = get_settings()
-    to_encode = data.copy()
 
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # Try Supabase JWT secret first
+    jwt_secret = settings.supabase_jwt_secret
 
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.jwt_secret_key, algorithm=ALGORITHM)
-    return encoded_jwt
+    # Fall back to legacy JWT secret if Supabase not configured
+    if not jwt_secret:
+        jwt_secret = settings.jwt_secret_key
 
-
-def decode_token(token: str) -> Optional[str]:
-    """Decode a JWT token and return the email."""
-    settings = get_settings()
     try:
-        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            return None
-        return email
+        payload = jwt.decode(
+            token,
+            jwt_secret,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False}  # Supabase JWTs may have audience claims
+        )
+        return payload
     except JWTError:
         return None
+
+
+def get_user_by_id(db: Session, user_id: UUID) -> Optional[User]:
+    """Get a user by their UUID."""
+    return db.query(User).filter(User.id == user_id).first()
 
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
@@ -67,64 +64,39 @@ def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email.lower()).first()
 
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    """Authenticate a user by email and password."""
-    user = get_user_by_email(db, email)
-    if not user:
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
-
-
-def create_user(
+def create_or_update_user_profile(
     db: Session,
+    user_id: UUID,
     email: str,
-    password: str,
-    full_name: str,
-    verification_token: Optional[str] = None,
-    verification_token_expires: Optional[datetime] = None
+    full_name: Optional[str] = None,
+    is_verified: bool = False
 ) -> User:
-    """Create a new user with optional verification token."""
-    hashed_password = get_password_hash(password)
-    user = User(
-        email=email.lower(),
-        hashed_password=hashed_password,
-        full_name=full_name,
-        is_verified=False,
-        verification_token=verification_token,
-        verification_token_expires=verification_token_expires
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+    """
+    Create or update a user profile.
 
+    This is called when a user authenticates with Supabase but may not have
+    a profile in our users table yet.
+    """
+    user = get_user_by_id(db, user_id)
 
-def get_user_by_verification_token(db: Session, token: str) -> Optional[User]:
-    """Get a user by verification token."""
-    return db.query(User).filter(User.verification_token == token).first()
+    if user:
+        # Update existing user
+        user.email = email.lower()
+        if full_name:
+            user.full_name = full_name
+        if is_verified:
+            user.is_verified = is_verified
+    else:
+        # Create new user profile
+        user = User(
+            id=user_id,
+            email=email.lower(),
+            full_name=full_name or email.split('@')[0],
+            is_verified=is_verified,
+            is_active=True
+        )
+        db.add(user)
 
-
-def verify_user(db: Session, user: User) -> User:
-    """Mark user as verified and clear verification token."""
-    user.is_verified = True
-    user.verification_token = None
-    user.verification_token_expires = None
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-def update_verification_token(
-    db: Session,
-    user: User,
-    token: str,
-    expires: datetime
-) -> User:
-    """Update user's verification token."""
-    user.verification_token = token
-    user.verification_token_expires = expires
     db.commit()
     db.refresh(user)
     return user
@@ -136,6 +108,7 @@ async def get_current_user(
 ) -> User:
     """
     FastAPI dependency to get the current authenticated user.
+    Validates the Supabase JWT and returns the user profile.
     Raises HTTPException if authentication fails.
     """
     credentials_exception = HTTPException(
@@ -145,12 +118,35 @@ async def get_current_user(
     )
 
     token = credentials.credentials
-    email = decode_token(token)
+    payload = decode_supabase_token(token)
 
-    if email is None:
+    if payload is None:
         raise credentials_exception
 
-    user = get_user_by_email(db, email)
+    # Get user ID from token (Supabase uses 'sub' claim)
+    user_id_str = payload.get("sub")
+    email = payload.get("email")
+
+    if not user_id_str:
+        raise credentials_exception
+
+    try:
+        user_id = UUID(user_id_str)
+    except ValueError:
+        raise credentials_exception
+
+    # Look up user in our database
+    user = get_user_by_id(db, user_id)
+
+    # If user doesn't exist in our profile table, create them
+    if user is None and email:
+        user = create_or_update_user_profile(
+            db,
+            user_id=user_id,
+            email=email,
+            full_name=payload.get("user_metadata", {}).get("full_name"),
+            is_verified=payload.get("email_confirmed_at") is not None
+        )
 
     if user is None:
         raise credentials_exception
@@ -180,14 +176,62 @@ async def get_current_user_optional(
         return None
 
     token = credentials.credentials
-    email = decode_token(token)
+    payload = decode_supabase_token(token)
 
-    if email is None:
+    if payload is None:
         return None
 
-    user = get_user_by_email(db, email)
+    user_id_str = payload.get("sub")
+    email = payload.get("email")
+
+    if not user_id_str:
+        return None
+
+    try:
+        user_id = UUID(user_id_str)
+    except ValueError:
+        return None
+
+    user = get_user_by_id(db, user_id)
+
+    # Auto-create profile for authenticated Supabase users
+    if user is None and email:
+        user = create_or_update_user_profile(
+            db,
+            user_id=user_id,
+            email=email,
+            full_name=payload.get("user_metadata", {}).get("full_name"),
+            is_verified=payload.get("email_confirmed_at") is not None
+        )
 
     if user is None or not user.is_active:
         return None
 
+    return user
+
+
+# Legacy functions - kept for backward compatibility during migration
+# These will be removed after full Supabase migration
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Legacy: Verify a plain password against a hashed password."""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Legacy: Hash a password."""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    return pwd_context.hash(password)
+
+
+def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
+    """Legacy: Authenticate a user by email and password."""
+    user = get_user_by_email(db, email)
+    if not user or not user.hashed_password:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
     return user

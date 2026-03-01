@@ -61,19 +61,8 @@ export default function RegisterPage() {
       await register({ email, password, full_name: fullName });
       setSuccess(true);
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
-        const detail = axiosError.response?.data?.detail;
-        if (typeof detail === 'string') {
-          setError(detail);
-        } else if (Array.isArray(detail) && detail.length > 0) {
-          setError(detail[0].msg || t('register.defaultError'));
-        } else {
-          setError(t('register.defaultError'));
-        }
-      } else {
-        setError(t('register.genericError'));
-      }
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(errorMessage || t('register.defaultError'));
     } finally {
       setIsLoading(false);
     }

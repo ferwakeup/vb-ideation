@@ -3,7 +3,8 @@ Pydantic schemas for authentication.
 """
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
+from uuid import UUID
 
 
 class UserCreate(BaseModel):
@@ -27,7 +28,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     """Schema for user response (safe user data)."""
-    id: int
+    id: Union[UUID, int, str]  # UUID for Supabase, int/str for legacy
     email: str
     full_name: str
     is_active: bool

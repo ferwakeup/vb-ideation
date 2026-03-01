@@ -5,13 +5,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import Spinner from '../components/Spinner';
 import LanguageSelector from '../components/LanguageSelector';
 
 export default function ResendVerificationPage() {
   const { t } = useTranslation('auth');
   const { t: tCommon } = useTranslation('common');
+  const { resendVerification } = useAuth();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -31,17 +32,13 @@ export default function ResendVerificationPage() {
     setMessage('');
 
     try {
-      const response = await api.resendVerification({ email });
+      await resendVerification(email);
       setStatus('success');
-      setMessage(response.message);
+      setMessage(t('resend.successMessage'));
     } catch (err: unknown) {
       setStatus('error');
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { detail?: string } } };
-        setMessage(axiosError.response?.data?.detail || t('resend.defaultError'));
-      } else {
-        setMessage(t('resend.genericError'));
-      }
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setMessage(errorMessage || t('resend.defaultError'));
     }
   };
 

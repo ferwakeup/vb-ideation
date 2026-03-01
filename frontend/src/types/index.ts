@@ -143,7 +143,7 @@ export interface PDFScoringResult {
 
 // Authentication types
 export interface User {
-  id: number;
+  id: number | string; // number for legacy, string (UUID) for Supabase
   email: string;
   full_name: string;
   is_active: boolean;

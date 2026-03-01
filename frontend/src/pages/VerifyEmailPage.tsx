@@ -1,47 +1,90 @@
 /**
  * Verify Email Page Component
- * Handles email verification via token from URL
+ * Handles email verification via Supabase callback
  */
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { api } from '../services/api';
+import { supabase } from '../clients/supabase';
 import Spinner from '../components/Spinner';
 
 export default function VerifyEmailPage() {
   const { t } = useTranslation('auth');
   const { t: tCommon } = useTranslation('common');
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const navigate = useNavigate();
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const verifyEmail = async () => {
-      if (!token) {
-        setStatus('error');
-        setMessage(t('verification.invalidLink'));
-        return;
-      }
-
+    const handleEmailVerification = async () => {
       try {
-        const response = await api.verifyEmail({ token });
-        setStatus('success');
-        setMessage(response.message);
-      } catch (err: unknown) {
-        setStatus('error');
-        if (err && typeof err === 'object' && 'response' in err) {
-          const axiosError = err as { response?: { data?: { detail?: string } } };
-          setMessage(axiosError.response?.data?.detail || t('verification.linkExpired'));
-        } else {
-          setMessage(t('verification.genericError'));
+        // Supabase handles the token verification automatically via the URL hash
+        // We just need to check if the session is valid after the redirect
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          setStatus('error');
+          setMessage(error.message || t('verification.genericError'));
+          return;
         }
+
+        if (session?.user?.email_confirmed_at) {
+          // Update user profile to mark as verified
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ is_verified: true })
+            .eq('id', session.user.id);
+
+          if (updateError) {
+            console.error('Error updating user verification status:', updateError);
+          }
+
+          setStatus('success');
+          setMessage(t('verification.successMessage'));
+
+          // Redirect to app after a short delay
+          setTimeout(() => {
+            navigate('/app');
+          }, 2000);
+        } else {
+          // No confirmed session, might be a direct visit or expired link
+          setStatus('error');
+          setMessage(t('verification.invalidLink'));
+        }
+      } catch (err) {
+        setStatus('error');
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setMessage(errorMessage || t('verification.genericError'));
       }
     };
 
-    verifyEmail();
-  }, [token, t]);
+    // Listen for auth state changes (Supabase processes the URL hash automatically)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+        setStatus('success');
+        setMessage(t('verification.successMessage'));
+
+        // Update user profile to mark as verified
+        supabase
+          .from('users')
+          .update({ is_verified: true })
+          .eq('id', session.user.id)
+          .then(() => {
+            setTimeout(() => {
+              navigate('/app');
+            }, 2000);
+          });
+      }
+    });
+
+    // Initial check
+    handleEmailVerification();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, t]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-6 py-12">
@@ -79,12 +122,7 @@ export default function VerifyEmailPage() {
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">{t('verification.verified')}</h1>
               <p className="text-gray-400 mb-6">{message}</p>
-              <Link
-                to="/login"
-                className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
-              >
-                {t('verification.signIn')}
-              </Link>
+              <p className="text-sm text-gray-500">{t('verification.redirecting')}</p>
             </>
           )}
 

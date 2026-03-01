@@ -2,6 +2,7 @@
 Extraction database model for storing PDF text extractions.
 """
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, LargeBinary, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -14,7 +15,7 @@ class Extraction(Base):
     __tablename__ = "extractions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Nullable for anonymous extractions
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # UUID for Supabase auth
     file_name = Column(String, nullable=False)
     file_hash = Column(String(64), nullable=False, index=True)  # SHA-256 hash of file content
     model_used = Column(String, nullable=False)
