@@ -25,10 +25,12 @@ from app.models.score import (
     DimensionScore
 )
 from app.models.extraction import Extraction
+from app.models.user import User
 from app.services.scorer import IdeaScorer
 from app.services.mas_scorer import MASScorer
 from app.config import get_settings, Settings
 from app.services.agents.progress import get_architecture, get_all_steps_info
+from app.services.auth import get_current_user_optional
 from app.database import get_db
 
 logger = logging.getLogger(__name__)
@@ -236,7 +238,8 @@ async def score_pdf_stream(
     model: Optional[str] = Form(default=None, description="Model name"),
     use_checkpoints: bool = Form(default=True, description="Use checkpoint system"),
     settings: Settings = Depends(get_settings),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     """
     Score a business idea from a PDF file with real-time progress streaming (SSE).
@@ -372,7 +375,7 @@ async def score_pdf_stream(
                             model_used=model_used,
                             sector=sector,
                             token_count=len(extracted_text) // 4,
-                            user_id=None  # Anonymous extraction
+                            user_id=current_user.id if current_user else None
                         )
                         db.add(new_extraction)
                         db.commit()
