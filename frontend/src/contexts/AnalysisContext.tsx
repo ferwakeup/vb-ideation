@@ -54,7 +54,7 @@ const AnalysisContext = createContext<AnalysisContextType | null>(null);
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
   const { addEntry } = useHistory();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { addMessage: addDebugMessage, isDebugMode } = useDebug();
 
   // Core state
@@ -160,9 +160,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       handleResult,
       handleError,
       handleInit,
-      handleDebug
+      handleDebug,
+      token || undefined
     );
-  }, [handleProgress, handleResult, handleError, handleInit, handleDebug]);
+  }, [handleProgress, handleResult, handleError, handleInit, handleDebug, token]);
 
   // Start extraction analysis
   const startExtractionAnalysis = useCallback((
@@ -204,9 +205,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       handleResult,
       handleError,
       handleInit,
-      handleDebug
+      handleDebug,
+      token || undefined
     );
-  }, [handleProgress, handleResult, handleError, handleInit, handleDebug]);
+  }, [handleProgress, handleResult, handleError, handleInit, handleDebug, token]);
 
   // Cancel analysis
   const cancelAnalysis = useCallback(() => {

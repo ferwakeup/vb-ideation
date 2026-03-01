@@ -51,7 +51,8 @@ export const api = {
     onResult: (result: PDFScoringResult) => void,
     onError: (error: string) => void,
     onInit?: (event: InitEvent) => void,
-    onDebug?: (event: { level: string; category: string; message: string; details?: Record<string, unknown>; source: string }) => void
+    onDebug?: (event: { level: string; category: string; message: string; details?: Record<string, unknown>; source: string }) => void,
+    token?: string
   ): { abort: () => void } => {
     const abortController = new AbortController();
 
@@ -66,10 +67,16 @@ export const api = {
     }
     formData.append('use_checkpoints', String(request.use_checkpoints ?? true));
 
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch(`${API_BASE}/score-pdf-stream`, {
       method: 'POST',
       body: formData,
       signal: abortController.signal,
+      headers,
     })
       .then(async (response) => {
         if (!response.ok) {
@@ -154,7 +161,8 @@ export const api = {
     onResult: (result: PDFScoringResult) => void,
     onError: (error: string) => void,
     onInit?: (event: InitEvent) => void,
-    onDebug?: (event: { level: string; category: string; message: string; details?: Record<string, unknown>; source: string }) => void
+    onDebug?: (event: { level: string; category: string; message: string; details?: Record<string, unknown>; source: string }) => void,
+    token?: string
   ): { abort: () => void } => {
     const abortController = new AbortController();
 
@@ -168,10 +176,16 @@ export const api = {
       formData.append('model', request.model);
     }
 
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch(`${API_BASE}/score-extraction-stream`, {
       method: 'POST',
       body: formData,
       signal: abortController.signal,
+      headers,
     })
       .then(async (response) => {
         if (!response.ok) {
